@@ -28,7 +28,7 @@ pyinstaller --clean pronterface.spec -y
 )
 (optional) codesign -s identityname dist/pronterface.app --deep
 
-setup on windows:
+setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
 (install python 3.6)
 (install python extension compile environment, see https://wiki.python.org/moin/WindowsCompilers )
 (install git)
@@ -42,13 +42,19 @@ pip install --upgrade setuptools
 pip install cffi
 pip install -r requirements.txt
 pip install cython
+
 python setup.py build_ext --inplace
 
 for running:
 python pronterface.py
 
 for packaging:
-pip install pyinstaller
-pyi-makespec -F --add-data images/*;images --add-data *.png;. --add-data *.ico;. -w -i pronterface.ico pronterface.py
+pip install pyinstaller -- THIS ONE MAY NOT WORK
+pip install git+https://github.com/Loran425/pyinstaller.git --DO THIS INSTEAD
+pip install pypiwin32
+pyi-makespec -F --add-data "images/*;images" --add-data "*.png;." --add-data "*.ico;." -w -i ./images/fablicator.ico pronterface.py
+
+Now you have to go to pronterface.spec and change the name='pronterface' to name='fablicator'
+
 pyinstaller --clean pronterface.spec -y
 
