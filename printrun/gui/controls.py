@@ -340,19 +340,19 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
             etool_sel_panel = esettingspanel if mini_mode else ebuttonspanel
             etool_label = wx.StaticText(etool_sel_panel, -1, _("Tool:"))
             if root.settings.extruders == 2:
-                root.extrudersel = wx.Button(etool_sel_panel, -1, "0", style = wx.BU_EXACTFIT)
+                root.extrudersel = wx.Button(etool_sel_panel, -1, "0 L", style = wx.BU_EXACTFIT)
                 root.extrudersel.SetToolTip(wx.ToolTip(_("Click to switch current extruder")))
 
                 def extrudersel_cb(event):
-                    if root.extrudersel.GetLabel() == "1":
-                        new = "0"
+                    if root.extrudersel.GetLabel() == "1 R":
+                        new = "0 L"
                     else:
-                        new = "1"
+                        new = "1 R"
                     root.extrudersel.SetLabel(new)
                     root.tool_change(event)
                 root.extrudersel.Bind(wx.EVT_BUTTON, extrudersel_cb)
-                root.extrudersel.GetValue = root.extrudersel.GetLabel
-                root.extrudersel.SetValue = root.extrudersel.SetLabel
+                root.extrudersel.GetValue = lambda: "1" if root.extrudersel.GetLabel() == "1 R" else "0"
+                root.extrudersel.SetValue = lambda new: root.extrudersel.SetLabel("1 R") if new == "1" else root.extrudersel.SetLabel("0 L")
             else:
                 choices = [str(i) for i in range(0, root.settings.extruders)]
                 root.extrudersel = wx.ComboBox(etool_sel_panel, -1, choices = choices,
