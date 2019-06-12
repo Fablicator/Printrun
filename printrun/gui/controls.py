@@ -50,26 +50,47 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     else:
         e_base_line = base_line + 2
 
-    ## NEED CHANGES HERE
-    pos_mapping = {
-        "htemp_label": (base_line + 0, 0),
-        "htemp_off": (base_line + 0, 2),
-        "htemp_val": (base_line + 0, 3),
-        "htemp_set": (base_line + 0, 4),
-        "btemp_label": (base_line + 1, 0),
-        "btemp_off": (base_line + 1, 2),
-        "btemp_val": (base_line + 1, 3),
-        "btemp_set": (base_line + 1, 4),
-        "ebuttons": (e_base_line + 0, 0),
-        "esettings": (e_base_line + 1, 0),
-        "speedcontrol": (e_base_line + 2, 0),
-        "flowcontrol": (e_base_line + 3, 0),
-        "htemp_gauge": (gauges_base_line + 0, 0),
-        "btemp_gauge": (gauges_base_line + 1, 0),
-        "tempdisp": (tempdisp_line, 0),
-        "extrude": (3, 0),
-        "reverse": (3, 2),
-    }
+    if root.settings.extruders == 1:
+        pos_mapping = {
+            "htemp_label": (base_line + 0, 0),
+            "htemp_off": (base_line + 0, 2),
+            "htemp_val": (base_line + 0, 3),
+            "htemp_set": (base_line + 0, 4),
+            "btemp_label": (base_line + 1, 0),
+            "btemp_off": (base_line + 1, 2),
+            "btemp_val": (base_line + 1, 3),
+            "btemp_set": (base_line + 1, 4),
+            "ebuttons": (e_base_line + 0, 0),
+            "esettings": (e_base_line + 1, 0),
+            "speedcontrol": (e_base_line + 2, 0),
+            "flowcontrol": (e_base_line + 3, 0),
+            "htemp_gauge0": (gauges_base_line + 0, 0),
+            "btemp_gauge": (gauges_base_line + 1, 0),
+            "tempdisp": (tempdisp_line, 0),
+            "extrude": (3, 0),
+            "reverse": (3, 2),
+        }
+    else:
+        pos_mapping = {
+            "htemp_label": (base_line + 0, 0),
+            "htemp_off": (base_line + 0, 2),
+            "htemp_val": (base_line + 0, 3),
+            "htemp_set": (base_line + 0, 4),
+            "btemp_label": (base_line + 1, 0),
+            "btemp_off": (base_line + 1, 2),
+            "btemp_val": (base_line + 1, 3),
+            "btemp_set": (base_line + 1, 4),
+            "ebuttons": (e_base_line + 0, 0),
+            "esettings": (e_base_line + 1, 0),
+            "speedcontrol": (e_base_line + 2, 0),
+            "flowcontrol": (e_base_line + 3, 0),
+            "htemp_gauge0": (gauges_base_line + 0, 0),
+            "htemp_gauge1": (gauges_base_line + 1, 0),
+            "btemp_gauge": (gauges_base_line + 2, 0),
+            "tempdisp": (tempdisp_line+1, 0),
+            "extrude": (3, 0),
+            "reverse": (3, 2),
+        }
 
     span_mapping = {
         "htemp_label": (1, 2),
@@ -84,7 +105,8 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
         "esettings": (1, 5 if root.display_graph else 6),
         "speedcontrol": (1, 5 if root.display_graph else 6),
         "flowcontrol": (1, 5 if root.display_graph else 6),
-        "htemp_gauge": (1, 5 if mini_mode else 6),
+        "htemp_gauge0": (1, 5 if mini_mode else 6),
+        "htemp_gauge1": (1, 5 if mini_mode else 6),
         "btemp_gauge": (1, 5 if mini_mode else 6),
         "tempdisp": (1, 5 if mini_mode else 6),
         "extrude": (1, 2),
@@ -129,6 +151,7 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     # Hotend & bed temperatures #
 
     # Hotend temp
+    ## NEED CHANGES
     add("htemp_label", wx.StaticText(parentpanel, -1, _("Heat:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
     htemp_choices = [root.temps[i] + " (" + i + ")" for i in sorted(root.temps.keys(), key = lambda x:root.temps[x])]
 
@@ -257,11 +280,16 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     root.flow_slider.Bind(wx.EVT_SCROLL, flowslider_scroll)
 
     # Temperature gauges #
-
-    ## NEED CHANGES HERE
     if root.display_gauges:
-        root.hottgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Heater:"), maxval = 300, bgcolor = root.bgcolor)
-        add("htemp_gauge", root.hottgauge, flag = wx.EXPAND)
+        if root.settings.extruders == 1: 
+            root.hottgauge0 = TempGauge(parentpanel, size = (-1, 24), title = _("Extruder (T0):"), maxval = 300, bgcolor = root.bgcolor)
+            add("htemp_gauge0", root.hottgauge0, flag = wx.EXPAND)
+        else:
+            root.hottgauge0 = TempGauge(parentpanel, size = (-1, 24), title = _("Left Ext.   (T0):"), maxval = 300, bgcolor = root.bgcolor)
+            add("htemp_gauge0", root.hottgauge0, flag = wx.EXPAND)
+            root.hottgauge1 = TempGauge(parentpanel, size = (-1, 24), title = _("Right Ext. (T1):"), maxval = 300, bgcolor = root.bgcolor)
+            add("htemp_gauge1", root.hottgauge1, flag = wx.EXPAND)
+
         root.bedtgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Bed:"), maxval = 150, bgcolor = root.bgcolor)
         add("btemp_gauge", root.bedtgauge, flag = wx.EXPAND)
 
@@ -278,9 +306,8 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
                 root.do_settemp(str(root.bsetpoint + 1))
             elif rot < 0:
                 root.do_settemp(str(max(0, root.bsetpoint - 1)))
-        ## NEED CHANGES HERE
-        root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotendgauge_scroll_setpoint)
-        root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bedgauge_scroll_setpoint)
+        #root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotendgauge_scroll_setpoint)
+        #root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bedgauge_scroll_setpoint)
 
     # Temperature (M105) feedback display #
     root.tempdisp = wx.StaticText(parentpanel, -1, "", style = wx.ST_NO_AUTORESIZE)
