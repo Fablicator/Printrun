@@ -240,7 +240,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.predisconnect_layer = None
         self.hsetpoint = 0.0
         self.bsetpoint = 0.0
-        if self.autoconnect:
+        if not self.autoconnect: #Autoconnects if autoconnect flag is false
             self.connect()
         if self.filename is not None:
             self.do_load(self.filename)
