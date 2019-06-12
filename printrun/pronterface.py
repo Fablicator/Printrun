@@ -181,10 +181,12 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # -- Okai, it seems it breaks things like update_gviz_params ><
         os.putenv("UBUNTU_MENUPROXY", "0")
         size = (self.settings.last_window_width, self.settings.last_window_height)
-        MainWindow.__init__(self, None, title = _("Pronterface"), size = size)
+        MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
         if self.settings.last_window_maximized:
             self.Maximize()
-        self.SetIcon(wx.Icon(iconfile("pronterface.png"), wx.BITMAP_TYPE_PNG))
+        
+        ## NEEDS CHANGES HERE
+        self.SetIcon(wx.Icon(iconfile("images/fablicator.ico"), wx.BITMAP_TYPE_ICO))
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MAXIMIZE, self.on_maximize)
         self.window_ready = True
@@ -511,6 +513,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
     def sethotendgui(self, f):
         self.hsetpoint = f
+        ## NEED CHANGES HERE
         if self.display_gauges: self.hottgauge.SetTarget(int(f))
         if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, int(f))
         if f > 0:
@@ -869,8 +872,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         """Show about dialog"""
 
         info = wx.adv.AboutDialogInfo()
-
-        info.SetIcon(wx.Icon(iconfile("pronterface.png"), wx.BITMAP_TYPE_PNG))
+        info.SetIcon(wx.Icon(iconfile("images/fablicator.ico"), wx.BITMAP_TYPE_ICO))
         info.SetName('Printrun')
         info.SetVersion(printcore.__version__)
 
@@ -908,6 +910,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     #  Settings & command line handling (including update callbacks)
     #  --------------------------------------------------------------
 
+    ## NEED CHANGES HERE
     def _add_settings(self, size):
         self.settings._add(BooleanSetting("monitor", True, _("Monitor printer status"), _("Regularly monitor printer temperatures (required to have functional temperature graph or gauges)"), "Printer"), self.update_monitor)
         self.settings._add(StringSetting("simarrange_path", "", _("Simarrange command"), _("Path to the simarrange binary to use in the STL plater"), "External"))
@@ -1709,6 +1712,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             gline_s = gcoder.S(gline)
             if gline_s is not None:
                 temp = gline_s
+
+                ## NEED CHANGES HERE
                 if self.display_gauges: wx.CallAfter(self.hottgauge.SetTarget, temp)
                 if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, temp)
         elif gline.command in ["M140", "M190"]:
@@ -1798,6 +1803,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
+            ## NEED CHANGES HERE
             if "T0" in temps and temps["T0"][0]:
                 hotend_temp = float(temps["T0"][0])
             elif "T" in temps and temps["T"][0]:
@@ -1805,14 +1811,17 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             else:
                 hotend_temp = None
             if hotend_temp is not None:
+                ## NEED CHANGES HERE
                 if self.display_graph: wx.CallAfter(self.graph.SetExtruder0Temperature, hotend_temp)
                 if self.display_gauges: wx.CallAfter(self.hottgauge.SetValue, hotend_temp)
                 setpoint = None
                 if "T0" in temps and temps["T0"][1]: setpoint = float(temps["T0"][1])
                 elif temps["T"][1]: setpoint = float(temps["T"][1])
                 if setpoint is not None:
+                    ## NEED CHANGES HERE
                     if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.hottgauge.SetTarget, setpoint)
+            ## NEED CHANGES HERE
             if "T1" in temps:
                 hotend_temp = float(temps["T1"][0])
                 if self.display_graph: wx.CallAfter(self.graph.SetExtruder1Temperature, hotend_temp)

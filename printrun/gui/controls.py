@@ -50,6 +50,7 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     else:
         e_base_line = base_line + 2
 
+    ## NEED CHANGES HERE
     pos_mapping = {
         "htemp_label": (base_line + 0, 0),
         "htemp_off": (base_line + 0, 2),
@@ -257,6 +258,7 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
 
     # Temperature gauges #
 
+    ## NEED CHANGES HERE
     if root.display_gauges:
         root.hottgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Heater:"), maxval = 300, bgcolor = root.bgcolor)
         add("htemp_gauge", root.hottgauge, flag = wx.EXPAND)
@@ -276,6 +278,7 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
                 root.do_settemp(str(root.bsetpoint + 1))
             elif rot < 0:
                 root.do_settemp(str(max(0, root.bsetpoint - 1)))
+        ## NEED CHANGES HERE
         root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotendgauge_scroll_setpoint)
         root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bedgauge_scroll_setpoint)
 
