@@ -10,6 +10,7 @@ printrun/gcoder_line.c
 printrun/gcoder_line*.so
 .project
 .pydevproject
+/dist/
 /build/
 /venv/
 /v3/
