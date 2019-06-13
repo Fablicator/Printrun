@@ -41,7 +41,7 @@ if __name__ == '__main__':
             "  -h, --help\t\t\tPrint this help message and exit\n"+\
             "  -V, --version\t\t\tPrint program's version number and exit\n"+\
             "  -v, --verbose\t\t\tIncrease verbosity\n"+\
-            "  -a, --autoconnect\t\tAutomatically try to connect to printer on startup\n"+\
+            "  -a, --autoconnect\t\tDon't automatically try to connect to printer on startup\n"+\
             "  -c, --conf, --config=CONFIG_FILE\tLoad this file on startup instead of .pronsolerc; you may chain config files, if so settings auto-save will use the last specified file\n"+\
             "  -e, --execute=COMMAND\t\tExecutes command after configuration/.pronsolerc is loaded; macros/settings from these commands are not autosaved"
 
