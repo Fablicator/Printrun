@@ -54,7 +54,5 @@ pip install git+https://github.com/Loran425/pyinstaller.git --DO THIS INSTEAD
 pip install pypiwin32
 pyi-makespec -F --add-data "images/*;images" --add-data "*.png;." --add-data "*.ico;." -w -i ./images/fablicator.ico fablicator.py
 
-Now you have to go to pronterface.spec and change the name='pronterface' to name='fablicator'
-
 pyinstaller --clean fablicator.spec -y
 

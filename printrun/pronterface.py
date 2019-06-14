@@ -181,7 +181,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # -- Okai, it seems it breaks things like update_gviz_params ><
         os.putenv("UBUNTU_MENUPROXY", "0")
         size = (self.settings.last_window_width, self.settings.last_window_height)
-        MainWindow.__init__(self, None, title = _("Fablicator Interface (06132019)"), size = size)
+        MainWindow.__init__(self, None, title = _("Fablicator Interface (061320191910)"), size = size)
         if self.settings.last_window_maximized:
             self.Maximize()
         
@@ -1805,8 +1805,15 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
-            hotend_temp = float(temps["T"][0]) if ("T" in temps and temps["T"][0]) else  None
-            hotend_temp0 = float(temps["T0"][0]) if ("T0" in temps and temps["T0"][0]) else None
+
+            # Special handling for first extruder
+            if ("T0" in temps and temps["T0"][0]):
+                hotend_temp0 = float(temps["T0"][0])
+            elif ("T" in temps and temps["T"][0]):
+                hotend_temp0 = float(temps["T"][0])
+            else:
+                hotend_temp0 = None
+
             hotend_temp1 = float(temps["T1"][0]) if ("T1" in temps and temps["T1"][0]) else None
             
             if hotend_temp0 is not None:
