@@ -1529,7 +1529,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # Must be called in wx.CallAfter for safety
         self.loading_gcode = False
         if failed == False:
-            self.SetTitle(_("Pronterface - %s") % self.filename)
+            self.SetTitle(_("File loaded - %s") % self.filename)
             message = _("Loaded %s, %d lines") % (self.filename, len(self.fgcode),)
             self.log(message)
             self.statusbar.SetStatusText(message)
