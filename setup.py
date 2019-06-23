@@ -126,7 +126,7 @@ if sys.argv[1] in("install", "uninstall") and len(prefix):
     sys.argv += ["--prefix", prefix]
 
 target_images_path = "share/pronterface/images/"
-data_files = [('share/pixmaps', ['fablicator_logo.png', 'plater.png', 'pronsole.png']),
+data_files = [('share/pixmaps', ['pronterface.png', 'plater.png', 'pronsole.png']),
               ('share/applications', ['pronterface.desktop', 'pronsole.desktop', 'plater.desktop']),
               ('share/metainfo', ['pronterface.appdata.xml', 'pronsole.appdata.xml', 'plater.appdata.xml'])]
 
@@ -167,7 +167,7 @@ setup(name = "Printrun",
       license = "GPLv3",
       data_files = data_files,
       packages = find_packages(),
-      scripts = ["pronsole.py", "pronterface.py", "plater.py", "printcore.py"],
+      scripts = ["pronsole.py", "fablicator.py", "plater.py", "printcore.py"],
       cmdclass = cmdclass,
       ext_modules = extensions,
       classifiers=["Programming Language :: Python :: 3 :: Only"],

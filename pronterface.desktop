@@ -1,10 +1,10 @@
 [Desktop Entry]
 Type=Application
-Name=Pronterface
+Name=Fablicator
 GenericName=Printer Interface
 Comment=Controls your 3D printer
 Icon=fablicator_logo
-Exec=/usr/bin/pronterface.py %f
+Exec=/usr/bin/fablicator.py %f
 Path=/usr/share/pronterface/
 StartupNotify=true
 Terminal=false

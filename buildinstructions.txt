@@ -35,6 +35,7 @@ $ sudo apt-get install python3
 $ sudo apt-get install python-pip
 $ sudo apt-get install python3-venv
 $ sudo apt-get install gcc python3-dev
+$ sudo apt-get install libdbus-glib-1-dev
 $ python3 -m venv v3
 $ . v3/bin/activate
 $ pip install --upgrade pip
@@ -44,6 +45,11 @@ $ pip install -U \
     -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04 \
     wxPython
 $ pip install -r requirements.txt
+$ pip install cython
+$ python3 setup.py build_ext --inplace
+
+for running:
+python3 fablicator.py
 
 ---------------------------------------------------------------------------------
 
