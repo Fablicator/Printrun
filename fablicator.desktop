@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Fablicator
+GenericName=Printer Interface
+Comment=Controls your 3D printer
+Icon=/home/fablicator/FablicatorSoftware/FablicatorInterface/fablicator_logo.png
+Exec=bash -c "~/FablicatorSoftware/FablicatorInterface/fablicator %F;$SHELL"
+Path=/home/fablicator/FablicatorSoftware/FablicatorInterface/
+StartupNotify=true
+Terminal=false
+Categories=GNOME;GTK;Utility;Graphics;3DGraphics;
+MimeType=application/sla;model/x.stl-binary;model/x.stl-ascii;text/x.gcode;
