@@ -1,6 +1,6 @@
 # python (>= 3.6)
 pyserial >= 2.7
-wxPython (>= 4.0)
+wxPython (>= 4.0) ; sys_platform != 'linux'
 numpy (>= 1.8.2)
 pyglet (>= 1.1)
 cffi

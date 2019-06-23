@@ -28,6 +28,25 @@ pyinstaller --clean pronterface.spec -y
 )
 (optional) codesign -s identityname dist/pronterface.app --deep
 
+------------------------------------------------------------------------
+
+setup on Ubuntu:
+$ sudo apt-get install python3
+$ sudo apt-get install python-pip
+$ sudo apt-get install python3-venv
+$ sudo apt-get install gcc python3-dev
+$ python3 -m venv v3
+$ . v3/bin/activate
+$ pip install --upgrade pip
+$ pip install --upgrade setuptools
+$ pip install cffi
+$ pip install -U \
+    -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04 \
+    wxPython
+$ pip install -r requirements.txt
+
+---------------------------------------------------------------------------------
+
 setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
 (install python 3.6)
 (install python extension compile environment, see https://wiki.python.org/moin/WindowsCompilers )
@@ -46,7 +65,7 @@ pip install cython
 python setup.py build_ext --inplace
 
 for running:
-python pronterface.py
+python fablicator.py
 
 for packaging:
 pip install pyinstaller -- THIS ONE MAY NOT WORK
