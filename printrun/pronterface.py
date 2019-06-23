@@ -185,7 +185,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         if self.settings.last_window_maximized:
             self.Maximize()
         
-        self.SetIcon(wx.Icon(iconfile("images/fablicator.ico"), wx.BITMAP_TYPE_ICO))
+        self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MAXIMIZE, self.on_maximize)
         self.window_ready = True
@@ -875,7 +875,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         """Show about dialog"""
 
         info = wx.adv.AboutDialogInfo()
-        info.SetIcon(wx.Icon(iconfile("images/fablicator.ico"), wx.BITMAP_TYPE_ICO))
+        info.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
         info.SetName('Printrun')
         info.SetVersion(printcore.__version__)
 

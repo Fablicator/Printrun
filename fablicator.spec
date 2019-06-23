@@ -26,7 +26,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False , icon='images\\fablicator.ico')
+          console=False , icon='fablicator.png')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
