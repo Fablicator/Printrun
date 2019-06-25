@@ -14,3 +14,5 @@ printrun/gcoder_line*.so
 /build/
 /venv/
 /v3/
+installed_files
+Printrun.egg-info/
