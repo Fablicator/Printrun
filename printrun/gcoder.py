@@ -369,6 +369,8 @@ class GCode:
             # get device caps from firmware: max speed, acceleration/axis
             # (including extruder)
             # calculate the maximum move duration accounting for above ;)
+            using_kiss = False
+            kiss_duration = 0.0
             lastx = lasty = lastz = laste = lastf = 0.0
             lastdx = 0
             lastdy = 0
@@ -402,6 +404,20 @@ class GCode:
             # # Parse line
             # Use a heavy copy of the light line to preprocess
             line = get_line(true_line)
+            # FABLICATOR: This is where the thing does all the line parsing
+            # print("DEBUG " + str(true_line.raw))
+            if true_line.raw.startswith("; KISSlicer - "):
+                # print(true_line.raw)
+                print("FILE SLICED BY KISSlicer")
+                using_kiss = True
+
+            if true_line.raw.startswith("; Estimated Build Time:   "):
+                # print(true_line.raw)
+                str_kiss_duration = true_line.raw.replace("; Estimated Build Time:", "").replace("minutes","").strip()
+                kiss_duration = float(str_kiss_duration)*60
+                print("Print will take " + str(kiss_duration) + " seconds")
+                pass
+
             split_raw = split(line)
             if line.command:
                 # Update properties
@@ -535,6 +551,7 @@ class GCode:
                                 ymax = max(ymax, line.current_y)
 
                     # Compute duration
+
                     if line.command == "G0" or line.command == "G1":
                         x = line.x if line.x is not None else lastx
                         y = line.y if line.y is not None else lasty

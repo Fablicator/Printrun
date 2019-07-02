@@ -2440,3 +2440,4 @@ class FileDrop(wx.FileDropTarget):
         # .loadfile on the object associated with the 
         # current drop target
         self.window.loadfile(None, filenames[0])
+        return True
