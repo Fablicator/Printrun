@@ -2409,4 +2409,22 @@ class PronterApp(wx.App):
         super(PronterApp, self).__init__(*args, **kwargs)
         self.SetAppName("Pronterface")
         self.mainwindow = PronterWindow(self)
+
+        dt = FileDrop(self.mainwindow)
+        self.mainwindow.SetDropTarget(dt)
+
         self.mainwindow.Show()
+
+# File dropping
+class FileDrop(wx.FileDropTarget):
+
+    def __init__(self, window):
+        # Initialize a new drop target for the object specified
+        wx.FileDropTarget.__init__(self)
+        self.window = window
+
+    def OnDropFiles(self, x, y, filenames):
+        # When a file is dropped called the method
+        # .loadfile on the object associated with the 
+        # current drop target
+        self.window.loadfile(None, filenames[0])

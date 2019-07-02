@@ -1,6 +1,6 @@
 from distutils.core import setup
 
-setup(windows = [{"script": "pronterface.py", "icon_resources": [(1, "P-face.ico")]},
+setup(windows = [{"script": "fablicator.py", "icon_resources": [(1, "P-face.ico")]},
                  {"script": "plater.py", "icon_resources": [(1, "plater.ico")]},
                  ],
       console = [{"script": "pronsole.py", "icon_resources": [(1, "pronsole.ico")]},
