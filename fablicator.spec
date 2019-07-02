@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['fablicator.py'],
-             pathex=['/home/fablicator/Documents/GitHub/Printrun'],
+             pathex=['C:\\Users\\KevinPC\\Documents\\GitHub\\Printrun'],
              binaries=[],
              datas=[('images/*', 'images'), ('*.png', '.'), ('*.ico', '.')],
              hiddenimports=[],
@@ -26,7 +26,7 @@ exe = EXE(pyz,
           bootloader_ignore_signals=False,
           strip=False,
           upx=True,
-          console=False , icon='P-face.icns')
+          console=False , icon='images\\fablicator.ico')
 coll = COLLECT(exe,
                a.binaries,
                a.zipfiles,
