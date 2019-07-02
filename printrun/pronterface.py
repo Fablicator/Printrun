@@ -181,7 +181,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # -- Okai, it seems it breaks things like update_gviz_params ><
         os.putenv("UBUNTU_MENUPROXY", "0")
         size = (self.settings.last_window_width, self.settings.last_window_height)
-        MainWindow.__init__(self, None, title = _("Fablicator Interface (061320191910)"), size = size)
+        MainWindow.__init__(self, None, title = _("Fablicator Interface (Jul. 2, 2019 6:47 AM)"), size = size)
         if self.settings.last_window_maximized:
             self.Maximize()
         
@@ -2406,13 +2406,25 @@ class PronterApp(wx.App):
     mainwindow = None
 
     def __init__(self, *args, **kwargs):
+        
+        # Single instance checking
+        self.name = "Fablicator-%s" % wx.GetUserId()
+        self.instance = wx.SingleInstanceChecker(self.name)
+        
+        if self.instance.IsAnotherRunning():
+            sys.exit(2)
+            return False
+        # Must be done before the app opens
+        # Try moving this ot OnInit
         super(PronterApp, self).__init__(*args, **kwargs)
         self.SetAppName("Pronterface")
         self.mainwindow = PronterWindow(self)
 
+        # File dropper for main window
         dt = FileDrop(self.mainwindow)
         self.mainwindow.SetDropTarget(dt)
 
+        self.mainwindow.SetName("fablicator")
         self.mainwindow.Show()
 
 # File dropping
