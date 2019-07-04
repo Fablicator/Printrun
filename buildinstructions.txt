@@ -31,9 +31,14 @@ pyinstaller --clean pronterface.spec -y
 ------------------------------------------------------------------------
 
 setup on Ubuntu:
-sudo apt-get install python3 python3-pip python3-venv
-sudo apt-get install gcc python3-dev libdbus-glib-1-dev
-sudo apt-get install libsdl1.2debian libsdl1.2-dev
+
+sudo apt install python3 python3-pip python3-venv \
+  python3-serial python3-numpy cython3 python3-libxml2 \
+  python3-gi python3-dbus python3-psutil python3-cairosvg libpython3-dev \
+  python3-appdirs python3-wxgtk4.0 \
+  gcc python3-dev libdbus-glib-1-dev \
+  libsdl1.2debian libsdl1.2-dev
+
 python3 -m venv v3
 . ./v3/bin/activate
 pip install --upgrade pip
@@ -88,4 +93,3 @@ For a directory (THIS IS MORE STABLE)
 pyi-makespec -D --add-data "images/*;images" --add-data "*.png;." --add-data "*.ico;." -w -i ./images/fablicator.ico fablicator.py
 
 pyinstaller --clean fablicator.spec -y
-
