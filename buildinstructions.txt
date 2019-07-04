@@ -53,8 +53,7 @@ python3 setup.py build_ext --inplace
 
 for running:
 python3 fablicator.py
-https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 \
-      wxPython
+
 for installing:
 pip install pyinstaller
 pyi-makespec -F --add-data images/\*:images --add-data \*.png:. --add-data \*.ico:. -w -i P-face.icns fablicator.py
