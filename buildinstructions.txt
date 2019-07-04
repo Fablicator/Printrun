@@ -31,33 +31,32 @@ pyinstaller --clean pronterface.spec -y
 ------------------------------------------------------------------------
 
 setup on Ubuntu:
-$ sudo apt-get install python3
-$ sudo apt-get install python-pip
-$ sudo apt-get install python3-venv
-$ sudo apt-get install gcc python3-dev
-$ sudo apt-get install libdbus-glib-1-dev
-$ python3 -m venv v3
-$ . v3/bin/activate
-$ pip install --upgrade pip
-$ pip install --upgrade setuptools
-$ pip install cffi
-$ pip install -U \
+sudo apt-get install python3 python3-pip python3-venv
+sudo apt-get install gcc python3-dev libdbus-glib-1-dev
+sudo apt-get install libsdl1.2debian libsdl1.2-dev
+python3 -m venv v3
+. ./v3/bin/activate
+pip install --upgrade pip
+pip install --upgrade setuptools
+pip install cffi
+pip install -U \
     -f https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04 \
     wxPython
-$ pip install -r requirements.txt
-$ pip install cython
-$ python3 setup.py build_ext --inplace
+pip install -r requirements.txt
+pip install cython
+python3 setup.py build_ext --inplace
 
 for running:
 python3 fablicator.py
-
+https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-16.04 \
+      wxPython
 for installing:
-$ pip install pyinstaller
-$ pyi-makespec -F --add-data images/\*:images --add-data \*.png:. --add-data \*.ico:. -w -i P-face.icns fablicator.py
-$ pyinstaller --clean fablicator.spec -y
-$ cp fablicator_logo.png dist/fablicator_logo.png
-$ cp -R dist/ ~/FablicatorSoftware/FablicatorInterface/
-$ cp fablicator.desktop ~/.local/share/applications/
+pip install pyinstaller
+pyi-makespec -F --add-data images/\*:images --add-data \*.png:. --add-data \*.ico:. -w -i P-face.icns fablicator.py
+pyinstaller --clean fablicator.spec -y
+cp fablicator_logo.png dist/fablicator_logo.png
+cp -R dist/ ~/FablicatorSoftware/FablicatorInterface/
+cp fablicator.desktop ~/.local/share/applications/
 ---------------------------------------------------------------------------------
 
 setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
