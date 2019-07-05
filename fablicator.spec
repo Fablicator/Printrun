@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['fablicator.py'],
-             pathex=['/home/kevin/Projects/Printrun'],
+             pathex=['/home/kevin/github/Printrun'],
              binaries=[],
              datas=[('images/*', 'images'), ('*.png', '.'), ('*.ico', '.')],
              hiddenimports=[],
