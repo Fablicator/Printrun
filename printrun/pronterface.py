@@ -1505,7 +1505,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             return
         self.viz_last_layer = layer
         if time.time() - self.viz_last_yield > 1.0:
-            time.sleep(0.2)
+            time.sleep(0.4)
             self.loading_gcode_message = _("Loading %s: %d layers loaded (%d lines)") % (self.filename, layer + 1, len(gcode))
             self.viz_last_yield = time.time()
             wx.CallAfter(self.statusbar.SetStatusText, self.loading_gcode_message)

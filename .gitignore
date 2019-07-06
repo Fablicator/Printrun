@@ -16,3 +16,4 @@ printrun/gcoder_line*.so
 /v3/
 installed_files
 Printrun.egg-info/
+*.spec
