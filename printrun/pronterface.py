@@ -25,6 +25,7 @@ import subprocess
 import glob
 import logging
 import re
+import socket
 
 try: import simplejson as json
 except ImportError: import json
@@ -2404,28 +2405,54 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 class PronterApp(wx.App):
 
     mainwindow = None
-
     def __init__(self, *args, **kwargs):
         
         # Single instance checking
         self.name = "Fablicator-%s" % wx.GetUserId()
         self.instance = wx.SingleInstanceChecker(self.name)
         
-        if self.instance.IsAnotherRunning():
+        # Create a socket server to handle opening of files in other instances
+        self.BINDIP = 'localhost'
+        self.BINDPORT = 13008
+        self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            self.tcp.bind((self.BINDIP, self.BINDPORT))
+            self.tcp.listen(1) ## Only allow 1 connection
+        except:
+            self.tcp.connect((self.BINDIP, self.BINDPORT))
+            self.tcp.send(bytes(' '.join(sys.argv[1:]), 'utf-8'))
             sys.exit(2)
-            return False
+        
+        self.inst_daemon = threading.Thread(
+            target=self.instance_daemon,
+            daemon=True
+        )
+        self.inst_daemon.start()
+
+        # if self.instance.IsAnotherRunning():
+        #     sys.exit(2)
+        #     return False
         # Must be done before the app opens
         # Try moving this ot OnInit
         super(PronterApp, self).__init__(*args, **kwargs)
         self.SetAppName("Pronterface")
         self.mainwindow = PronterWindow(self)
-
         # File dropper for main window
         dt = FileDrop(self.mainwindow)
         self.mainwindow.SetDropTarget(dt)
-
         self.mainwindow.SetName("fablicator")
         self.mainwindow.Show()
+    
+    def instance_daemon(self):
+        # This thread will check for a new instance requesting a
+        # connection every second
+        while True:
+            conn, addr = self.tcp.accept()
+            if conn != None:
+                # print("New instance wants to open " + str(conn.recv(1024), 'utf-8'))
+                new_file = str(conn.recv(1024), 'utf-8')
+                self.mainwindow.loadfile(None, new_file)
+
 
 # File dropping
 class FileDrop(wx.FileDropTarget):
