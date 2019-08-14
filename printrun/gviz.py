@@ -38,15 +38,15 @@ class GvizBaseFrame(wx.Frame):
 
         vbox = wx.BoxSizer(wx.VERTICAL)
         self.toolbar = wx.ToolBar(panel, -1, style = wx.TB_HORIZONTAL | wx.NO_BORDER | wx.TB_HORZ_TEXT)
-        self.toolbar.AddTool(1, '', wx.Image(imagefile('zoom_in.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), _("Zoom In [+]"),)
-        self.toolbar.AddTool(2, '', wx.Image(imagefile('zoom_out.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), _("Zoom Out [-]"))
+        self.toolbar.AddTool(1, '', wx.Bitmap(imagefile('zoom_in.png'), wx.BITMAP_TYPE_PNG), _("Zoom In [+]"),)
+        self.toolbar.AddTool(2, '', wx.Bitmap(imagefile('zoom_out.png'), wx.BITMAP_TYPE_PNG), _("Zoom Out [-]"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddTool(3, '', wx.Image(imagefile('arrow_up.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), _("Move Up a Layer [U]"))
-        self.toolbar.AddTool(4, '', wx.Image(imagefile('arrow_down.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), _("Move Down a Layer [D]"))
-        self.toolbar.AddTool(5, " " + _("Reset view"), wx.Image(imagefile('reset.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), shortHelp = _("Reset view"))
+        self.toolbar.AddTool(3, '', wx.Bitmap(imagefile('arrow_up.png'), wx.BITMAP_TYPE_PNG), _("Move Up a Layer [U]"))
+        self.toolbar.AddTool(4, '', wx.Bitmap(imagefile('arrow_down.png'), wx.BITMAP_TYPE_PNG), _("Move Down a Layer [D]"))
+        self.toolbar.AddTool(5, " " + _("Reset view"), wx.Bitmap(imagefile('reset.png'), wx.BITMAP_TYPE_PNG), shortHelp = _("Reset view"))
         self.toolbar.AddSeparator()
-        self.toolbar.AddTool(6, '', wx.Image(imagefile('inject.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), wx.NullBitmap, shortHelp = _("Inject G-Code"), longHelp = _("Insert code at the beginning of this layer"))
-        self.toolbar.AddTool(7, '', wx.Image(imagefile('edit.png'), wx.BITMAP_TYPE_PNG).ConvertToBitmap(), wx.NullBitmap, shortHelp = _("Edit layer"), longHelp = _("Edit the G-Code of this layer"))
+        self.toolbar.AddTool(6, '', wx.Bitmap(imagefile('inject.png'), wx.BITMAP_TYPE_PNG), wx.NullBitmap, shortHelp = _("Inject G-Code"), longHelp = _("Insert code at the beginning of this layer"))
+        self.toolbar.AddTool(7, '', wx.Bitmap(imagefile('edit.png'), wx.BITMAP_TYPE_PNG), wx.NullBitmap, shortHelp = _("Edit layer"), longHelp = _("Edit the G-Code of this layer"))
 
         vbox.Add(self.toolbar, 0, border = 5)
 
