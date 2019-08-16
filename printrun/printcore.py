@@ -36,6 +36,8 @@ from functools import wraps, reduce
 from collections import deque
 from printrun import gcoder
 from .utils import set_utf8_locale, install_locale, decode_utf8
+import json
+
 try:
     set_utf8_locale()
 except:
@@ -404,6 +406,7 @@ class printcore():
         return reduce(lambda x, y: x ^ y, map(ord, command))
 
     def startprint(self, gcode, startindex = 0):
+        print("DEBUG: CALLED startprint(startindex = " + str(startindex) + ")")
         """Start a print, gcode is an array of gcode commands.
         returns True on success, False if already printing.
         The print queue will be replaced with the contents of the data array,
@@ -425,6 +428,7 @@ class printcore():
         self.print_thread = threading.Thread(target = self._print,
                                              kwargs = {"resuming": resuming})
         self.print_thread.start()
+
         return True
 
     def cancelprint(self):

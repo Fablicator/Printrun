@@ -153,6 +153,9 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.pauseScript = None #"pause.gcode"
         self.endScript = None #"end.gcode"
 
+        self.recovery_info = {}
+        self.shouldrecover = False
+        
         self.filename = filename
 
         self.capture_skip = {}
@@ -1221,6 +1224,76 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         dlg.Destroy()
 
     #  --------------------------------------------------------------
+    #  Shutdown recovery handling
+    #  --------------------------------------------------------------
+
+    def canrecover(self):
+        print("DEBUG: CALLED canrecover()")
+        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        return os.path.exists(rc_filepath)
+
+    def getrecoverinfo(self):
+        print("DEBUG: CALLED getrecoverinfo()")
+        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        if not os.path.exists(rc_filepath): 
+            return None
+        rc_file = open(rc_filepath, "r")
+        info = json.loads(rc_file.read())
+        rc_file.close()
+        return info
+    
+    def setrecoverinfo(self, recoveryinfo):
+        print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo"), "w")
+        rc_file.write(json.dumps(recoveryinfo))
+        rc_file.close()
+
+    def getrecovergcodefile(self):
+        print("DEBUG: CALLED getrecovergcodefile()")
+        return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+    
+    def setrecovergcode(self, gcode):
+        print("DEBUG: CALLED setrecovergcode( gcode )")
+        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
+        rc_file.write(gcode)
+        rc_file.close()
+    
+    def clearrecovery(self):
+        print("DEBUG: CALLED clearrecovery()")
+        rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+        
+        os.remove(rc_info)
+        os.remove(rc_gcode)
+
+    def recover_prompt(self):
+        print("DEBUG: CALLED recover_prompt()")
+        dlg = wx.MessageDialog(None, "Do you want to recover the last print?",'Shutdown',wx.YES_NO)
+        result = dlg.ShowModal()
+        if result == wx.ID_YES:
+            self.recovery_info = self.getrecoverinfo()
+            self.fullrecover()
+        else:
+            self.clearrecovery()
+
+    def fullrecover(self):
+        print("DEBUG: CALLED fullrecover()")
+        self.shouldrecover = True
+        if not self.p.online:
+            wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
+            return
+
+        self.p.send_now("M104 T0 S%f" % self.recovery_info["T0"])
+        if "T1" in self.recovery_info: self.p.send_now("M104 T1 S%f" % self.recovery_info["T1"])
+        self.p.send_now("M190 S%f" % self.recovery_info["B"])
+        #Set Z
+        self.p.send_now("G92 Z%f" % self.recovery_info["layer"])
+        # Home X and Y
+        self.p.send_now("G28 X Y")
+
+        self.loadfile(None, self.getrecovergcodefile())
+
+    #  --------------------------------------------------------------
     #  Print/upload handling
     #  --------------------------------------------------------------
 
@@ -1255,6 +1328,18 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.extra_print_time = 0
         self.on_startprint()
         threading.Thread(target = self.getfiles).start()
+
+    def recover(self, event):
+        self.extra_print_time = 0
+        if not self.p.online:
+            wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
+            return
+        # Reset Z
+        self.p.send_now("G92 Z%f" % self.predisconnect_layer)
+        # Home X and Y
+        self.p.send_now("G28 X Y")
+        self.on_startprint()
+        self.p.startprint(self.predisconnect_mainqueue, self.p.queueindex)
 
     def upload(self, event):
         if not self.fgcode:
@@ -1314,18 +1399,6 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.p.resume()
             wx.CallAfter(self.pausebtn.SetLabel, _("Pause"))
             wx.CallAfter(self.toolbarsizer.Layout)
-
-    def recover(self, event):
-        self.extra_print_time = 0
-        if not self.p.online:
-            wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
-            return
-        # Reset Z
-        self.p.send_now("G92 Z%f" % self.predisconnect_layer)
-        # Home X and Y
-        self.p.send_now("G28 X Y")
-        self.on_startprint()
-        self.p.startprint(self.predisconnect_mainqueue, self.p.queueindex)
 
     #  --------------------------------------------------------------
     #  File loading handling
@@ -1481,6 +1554,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def load_gcode_async(self, filename):
         self.filename = filename
+
+        rc_file = open(filename, "r")
+        self.setrecovergcode(rc_file.read()) # Save the current file to the .recoverygcode file
+        rc_file.close()
         gcode = self.pre_gcode_load()
         self.log(_("Loading file: %s") % filename)
         threading.Thread(target = self.load_gcode_async_thread, args = (gcode,)).start()
@@ -1546,6 +1623,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.viz_last_layer = None
         if print_stats:
             self.output_gcode_stats()
+        if self.shouldrecover:
+            self.on_startprint()
+            self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
+            self.shouldrecover = False
 
     def calculate_remaining_filament(self, length, extruder = 0):
         """
@@ -1676,6 +1757,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def endcb(self):
         """Callback on print end/pause"""
+        self.clearrecovery() # Clear the recovery data
         pronsole.pronsole.endcb(self)
         if self.p.queueindex == 0:
             self.p.runSmallScript(self.endScript)
@@ -1690,7 +1772,11 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         """Callback when printer goes online"""
         self.log(_("Printer is now online."))
         wx.CallAfter(self.online_gui)
-
+        if self.canrecover():
+            self.p.send_now("M412 S0")
+            self.recover_prompt() # If we can recover a print ask the user if they want to recover one
+        else:
+            print("No recovery file")
     def online_gui(self):
         """Callback when printer goes online (graphical bits)"""
         self.connectbtn.SetLabel(_("Disconnect"))
@@ -1806,6 +1892,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
+            #self.recovery_info["temps"] = temps
 
             # Special handling for first extruder
             if ("T0" in temps and temps["T0"][0]):
@@ -1823,6 +1910,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
                 setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
                 if setpoint is not None:
+                    self.recovery_info["T0"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.hottgauge0.SetTarget, setpoint)
 
@@ -1832,6 +1920,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
                 setpoint = float(temps["T1"][1]) if ("T1" in temps and temps["T1"][1]) else None 
                 if setpoint is not None:
+                    self.recovery_info["T1"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetExtruder1TargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.hottgauge1.SetTarget, setpoint)
 
@@ -1842,6 +1931,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 setpoint = temps["B"][1]
                 if setpoint:
                     setpoint = float(setpoint)
+                    self.recovery_info["B"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetBedTargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.bedtgauge.SetTarget, setpoint)
         except:
@@ -1894,7 +1984,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         return False
 
     def recvcb(self, l):
+
+        if self.p.printing and not self.shouldrecover:
+            self.recovery_info["layer"] = self.curlayer
+            self.recovery_info["queueindex"] = self.p.queueindex
+            self.setrecoverinfo(self.recovery_info)
+
         l = l.rstrip()
+        print(l)
         if not self.recvcb_actions(l):
             report_type = self.recvcb_report(l)
             isreport = report_type != REPORT_NONE
