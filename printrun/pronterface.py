@@ -1286,11 +1286,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send_now("M104 T0 S%f" % self.recovery_info["T0"])
         if "T1" in self.recovery_info: self.p.send_now("M104 T1 S%f" % self.recovery_info["T1"])
         self.p.send_now("M190 S%f" % self.recovery_info["B"])
-        #Set Z
-        self.p.send_now("G92 Z%f" % self.recovery_info["layer"])
-        # Home X and Y
-        self.p.send_now("G28 X Y")
 
+        self.p.send_now("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+        self.p.send_now("G0 Z%f" % (self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        self.p.send_now("G28 X Y") # Home X and Y
         self.loadfile(None, self.getrecovergcodefile())
 
     #  --------------------------------------------------------------
@@ -1625,6 +1624,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.output_gcode_stats()
         if self.shouldrecover:
             self.on_startprint()
+            previous_line = self.fgcode.lines[self.recovery_info["queueindex"] - 1]
+
+            self.p.send_now("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
+            self.p.send_now("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
             self.shouldrecover = False
 
