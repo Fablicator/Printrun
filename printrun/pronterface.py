@@ -1228,12 +1228,12 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     #  --------------------------------------------------------------
 
     def canrecover(self):
-        print("DEBUG: CALLED canrecover()")
+        # print("DEBUG: CALLED canrecover()")
         rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         return os.path.exists(rc_filepath)
 
     def getrecoverinfo(self):
-        print("DEBUG: CALLED getrecoverinfo()")
+        # print("DEBUG: CALLED getrecoverinfo()")
         rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         if not os.path.exists(rc_filepath): 
             return None
@@ -1243,23 +1243,23 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         return info
     
     def setrecoverinfo(self, recoveryinfo):
-        print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
         rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo"), "w")
         rc_file.write(json.dumps(recoveryinfo))
         rc_file.close()
 
     def getrecovergcodefile(self):
-        print("DEBUG: CALLED getrecovergcodefile()")
+        # print("DEBUG: CALLED getrecovergcodefile()")
         return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
     
     def setrecovergcode(self, gcode):
-        print("DEBUG: CALLED setrecovergcode( gcode )")
+        # print("DEBUG: CALLED setrecovergcode( gcode )")
         rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
         rc_file.write(gcode)
         rc_file.close()
     
     def clearrecovery(self):
-        print("DEBUG: CALLED clearrecovery()")
+        # print("DEBUG: CALLED clearrecovery()")
         rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
         
@@ -1267,7 +1267,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         os.remove(rc_gcode)
 
     def recover_prompt(self):
-        print("DEBUG: CALLED recover_prompt()")
+        # print("DEBUG: CALLED recover_prompt()")
         dlg = wx.MessageDialog(None, "Do you want to recover the last print?",'Shutdown',wx.YES_NO)
         result = dlg.ShowModal()
         if result == wx.ID_YES:
@@ -1277,19 +1277,21 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.clearrecovery()
 
     def fullrecover(self):
-        print("DEBUG: CALLED fullrecover()")
+        # print("DEBUG: CALLED fullrecover()")
         self.shouldrecover = True
         if not self.p.online:
             wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
             return
 
-        self.p.send_now("M104 T0 S%f" % self.recovery_info["T0"])
-        if "T1" in self.recovery_info: self.p.send_now("M104 T1 S%f" % self.recovery_info["T1"])
+        self.p.send_now("M109 T0 S%f" % self.recovery_info["T0"])
+        if "T1" in self.recovery_info: self.p.send_now("M109 T1 S%f" % self.recovery_info["T1"])
         self.p.send_now("M190 S%f" % self.recovery_info["B"])
 
         self.p.send_now("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
-        self.p.send_now("G0 Z%f" % (self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        self.p.send_now("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        # print("DEBUG: SENT G0 Z%f" % float(self.recovery_info["layer"] + 10))
         self.p.send_now("G28 X Y") # Home X and Y
+
         self.loadfile(None, self.getrecovergcodefile())
 
     #  --------------------------------------------------------------
@@ -1627,8 +1629,12 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             previous_line = self.fgcode.lines[self.recovery_info["queueindex"] - 1]
 
             self.p.send_now("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
+            print("DEBUG: SENT G0 X{0.x} Y{0.y}".format(previous_line))
+            self.p.send_now("G92 E{0.e}".format(previous_line)) # Reset the extruder position
+            print("DEBUG: SENT G92 E{0.e}".format(previous_line))
             self.p.send_now("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
+            self.p.send_now("M412 S1")
             self.shouldrecover = False
 
     def calculate_remaining_filament(self, length, extruder = 0):
