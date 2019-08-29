@@ -1261,10 +1261,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def clearrecovery(self):
         # print("DEBUG: CALLED clearrecovery()")
         rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
-        rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+        # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
         
         os.remove(rc_info)
-        os.remove(rc_gcode)
+        # os.remove(rc_gcode)
 
     def recover_prompt(self):
         # print("DEBUG: CALLED recover_prompt()")
@@ -1996,7 +1996,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
         if self.p.printing and not self.shouldrecover:
             self.recovery_info["layer"] = self.curlayer
-            self.recovery_info["queueindex"] = self.p.queueindex
+            self.recovery_info["queueindex"] = self.p.queueindex - 4 # This accounts for the gcode buffer in the firmware
             self.setrecoverinfo(self.recovery_info)
 
         l = l.rstrip()
