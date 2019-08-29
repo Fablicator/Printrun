@@ -155,6 +155,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         self.recovery_info = {}
         self.shouldrecover = False
+        self.RCBUFSIZE = 8
         
         self.filename = filename
 
@@ -1244,8 +1245,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        info = json.dumps(recoveryinfo)
         rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo"), "w")
-        rc_file.write(json.dumps(recoveryinfo))
+        rc_file.write(info)
         rc_file.close()
 
     def getrecovergcodefile(self):
@@ -1283,14 +1285,15 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
             return
 
-        self.p.send_now("M109 T0 S%f" % self.recovery_info["T0"])
+        self.p.send("M109 T0 S%f" % self.recovery_info["T0"])
         if "T1" in self.recovery_info: self.p.send_now("M109 T1 S%f" % self.recovery_info["T1"])
-        self.p.send_now("M190 S%f" % self.recovery_info["B"])
+        self.p.send("M190 S%f" % self.recovery_info["B"])
 
-        self.p.send_now("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
-        self.p.send_now("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+        self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        self.p.send("G0 E-10")
         # print("DEBUG: SENT G0 Z%f" % float(self.recovery_info["layer"] + 10))
-        self.p.send_now("G28 X Y") # Home X and Y
+        self.p.send("G28 X Y") # Home X and Y
 
         self.loadfile(None, self.getrecovergcodefile())
 
@@ -1628,14 +1631,15 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.on_startprint()
             previous_line = self.fgcode.lines[self.recovery_info["queueindex"] - 1]
 
-            self.p.send_now("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
-            print("DEBUG: SENT G0 X{0.x} Y{0.y}".format(previous_line))
-            self.p.send_now("G92 E{0.e}".format(previous_line)) # Reset the extruder position
-            print("DEBUG: SENT G92 E{0.e}".format(previous_line))
-            self.p.send_now("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
+            self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
+            self.p.send("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
+            self.p.send("G0 E0") # Extrude filament to begin printing
+            self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
+            time.sleep(20)
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
             self.p.send_now("M412 S1")
             self.shouldrecover = False
+
 
     def calculate_remaining_filament(self, length, extruder = 0):
         """
@@ -1783,7 +1787,6 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         wx.CallAfter(self.online_gui)
         if self.canrecover():
             self.p.send_now("M412 S0")
-            self.recover_prompt() # If we can recover a print ask the user if they want to recover one
         else:
             print("No recovery file")
     def online_gui(self):
@@ -1996,7 +1999,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
         if self.p.printing and not self.shouldrecover:
             self.recovery_info["layer"] = self.curlayer
-            self.recovery_info["queueindex"] = self.p.queueindex - 4 # This accounts for the gcode buffer in the firmware
+            self.recovery_info["queueindex"] = self.p.queueindex - self.RCBUFSIZE # This accounts for the gcode buffer in the firmware
             self.setrecoverinfo(self.recovery_info)
 
         l = l.rstrip()
