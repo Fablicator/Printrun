@@ -1639,11 +1639,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             previous_line = self.fgcode.lines[ln_i]
 
             self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
-            self.p.send("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
+            self.p.send("G0 Z%f F" % self.recovery_info["layer"]) # Move print head back down to normal position
             self.p.send("G0 E0") # Extrude filament to begin printing
             self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
-            print("WAITING 30s FOR MOVES TO FINISH")
-            time.sleep(30)
+            time.sleep(15)
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
             self.on_startprint()
             self.p.send_now("M412 S1")
@@ -1937,6 +1936,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                     self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
                     self.p.send("G0 E-10")
                     self.p.send("G28 X Y") # Home X and Y
+                    time.sleep(10)
                     self.loadfile(None, self.getrecovergcodefile())
 
             # Special handling for first extruder
@@ -2038,7 +2038,6 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.setrecoverinfo(self.recovery_info)
 
         l = l.rstrip()
-        print(l)
         if not self.recvcb_actions(l):
             report_type = self.recvcb_report(l)
             isreport = report_type != REPORT_NONE
