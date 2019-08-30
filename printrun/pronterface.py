@@ -1629,9 +1629,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if print_stats:
             self.output_gcode_stats()
         if self.shouldrecover:
+            # COMPENSATE FOR THE FIRMWARE PRINT BUFFER
             mv_buffer = self.RCBUFSIZE
             ln_i = self.recovery_info["queueindex"]
-            while mv_buffer > 0:
+            while mv_buffer > 0: 
                 ln_i = ln_i - 1
                 if self.fgcode.lines[ln_i].is_move:
                     mv_buffer = mv_buffer-1
@@ -1639,10 +1640,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             previous_line = self.fgcode.lines[ln_i]
 
             self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
-            self.p.send("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
+            self.p.send("G0 Z{0.z}".format(previous_line)) # Move print head back down to normal position
             self.p.send("G0 E0") # Extrude filament to begin printing
             self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
-            print("WAITING 30s FOR MOVES TO FINISH")
             time.sleep(30)
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
             self.on_startprint()
@@ -2038,7 +2038,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.setrecoverinfo(self.recovery_info)
 
         l = l.rstrip()
-        print(l)
+        # print(l)
         if not self.recvcb_actions(l):
             report_type = self.recvcb_report(l)
             isreport = report_type != REPORT_NONE
