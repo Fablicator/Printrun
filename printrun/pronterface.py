@@ -155,7 +155,8 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         self.recovery_info = {}
         self.shouldrecover = False
-        self.RCBUFSIZE = 8
+        self.recovertemp = False
+        self.RCBUFSIZE = 4
         
         self.filename = filename
 
@@ -1246,9 +1247,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
         info = json.dumps(recoveryinfo)
-        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo"), "w")
+        rcfilepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        rctmppath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo_tmp")
+        rc_file = open(rctmppath, "w")
         rc_file.write(info)
+        rc_file.flush()
+        os.fsync(rc_file.fileno())
         rc_file.close()
+        os.replace(rctmppath, rcfilepath)
 
     def getrecovergcodefile(self):
         # print("DEBUG: CALLED getrecovergcodefile()")
@@ -1274,28 +1280,23 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         result = dlg.ShowModal()
         if result == wx.ID_YES:
             self.recovery_info = self.getrecoverinfo()
-            self.fullrecover()
+            self.initfullrecover()
         else:
             self.clearrecovery()
 
-    def fullrecover(self):
-        # print("DEBUG: CALLED fullrecover()")
+    def initfullrecover(self):
+        # print("DEBUG: CALLED initfullrecover()")
         self.shouldrecover = True
         if not self.p.online:
             wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
             return
 
-        self.p.send("M109 T0 S%f" % self.recovery_info["T0"])
-        if "T1" in self.recovery_info: self.p.send_now("M109 T1 S%f" % self.recovery_info["T1"])
-        self.p.send("M190 S%f" % self.recovery_info["B"])
-
-        self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
-        self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
-        self.p.send("G0 E-10")
-        # print("DEBUG: SENT G0 Z%f" % float(self.recovery_info["layer"] + 10))
-        self.p.send("G28 X Y") # Home X and Y
-
-        self.loadfile(None, self.getrecovergcodefile())
+        
+        self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
+        if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
+        self.p.send("M140 S%f" % self.recovery_info["B"])
+        self.recovertemp = True
+        print("WAITING FOR TEMPERATURE")
 
     #  --------------------------------------------------------------
     #  Print/upload handling
@@ -1628,15 +1629,23 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if print_stats:
             self.output_gcode_stats()
         if self.shouldrecover:
-            self.on_startprint()
-            previous_line = self.fgcode.lines[self.recovery_info["queueindex"] - 1]
+            mv_buffer = self.RCBUFSIZE
+            ln_i = self.recovery_info["queueindex"]
+            while mv_buffer > 0:
+                ln_i = ln_i - 1
+                if self.fgcode.lines[ln_i].is_move:
+                    mv_buffer = mv_buffer-1
+            
+            previous_line = self.fgcode.lines[ln_i]
 
             self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
             self.p.send("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
             self.p.send("G0 E0") # Extrude filament to begin printing
             self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
-            time.sleep(20)
+            print("WAITING 30s FOR MOVES TO FINISH")
+            time.sleep(30)
             self.p.startprint(self.fgcode, self.recovery_info["queueindex"])
+            self.on_startprint()
             self.p.send_now("M412 S1")
             self.shouldrecover = False
 
@@ -1787,6 +1796,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         wx.CallAfter(self.online_gui)
         if self.canrecover():
             self.p.send_now("M412 S0")
+            self.recover_prompt()
         else:
             print("No recovery file")
     def online_gui(self):
@@ -1901,10 +1911,33 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if self.settings.mainviz != "3D" or self.settings.trackcurrentlayer3d:
             wx.CallAfter(self.gviz.setlayer, newlayer)
 
+        # self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+        # self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        # self.p.send("G0 E-10")
+        # self.p.send("G28 X Y") # Home X and Y
+        # self.loadfile(None, self.getrecovergcodefile())
+
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
             #self.recovery_info["temps"] = temps
+
+            if self.recovertemp:
+                maxdiff = 0.0
+
+                for tempkey in temps:
+                    tempdiff = float(temps[tempkey][1]) - float(temps[tempkey][0])
+                    # print("tempdiff = " + str(tempdiff))
+                    if tempdiff > maxdiff:
+                        maxdiff = tempdiff
+                # print("maxdiff = " + str(maxdiff))
+                if maxdiff < 2: 
+                    self.recovertemp = False
+                    self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+                    self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+                    self.p.send("G0 E-10")
+                    self.p.send("G28 X Y") # Home X and Y
+                    self.loadfile(None, self.getrecovergcodefile())
 
             # Special handling for first extruder
             if ("T0" in temps and temps["T0"][0]):
@@ -1913,7 +1946,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 hotend_temp0 = float(temps["T"][0])
             else:
                 hotend_temp0 = None
-
+            # print(temps)
             hotend_temp1 = float(temps["T1"][0]) if ("T1" in temps and temps["T1"][0]) else None
             
             if hotend_temp0 is not None:
@@ -1999,7 +2032,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
         if self.p.printing and not self.shouldrecover:
             self.recovery_info["layer"] = self.curlayer
-            self.recovery_info["queueindex"] = self.p.queueindex - self.RCBUFSIZE # This accounts for the gcode buffer in the firmware
+
+            if self.fgcode.lines[self.p.queueindex].is_move:
+                self.recovery_info["queueindex"] = self.p.queueindex
             self.setrecoverinfo(self.recovery_info)
 
         l = l.rstrip()
