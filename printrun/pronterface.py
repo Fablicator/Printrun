@@ -155,7 +155,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         self.recovery_info = {}
         self.shouldrecover = False
-        self.recovertemp = False
+        self.recovertemp = 0 # Number of times the temperature was correct
         self.RCBUFSIZE = 4
         
         self.filename = filename
@@ -1287,6 +1287,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     def initfullrecover(self):
         # print("DEBUG: CALLED initfullrecover()")
         self.shouldrecover = True
+        self.recovertemp = 0
         if not self.p.online:
             wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
             return
@@ -1295,7 +1296,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
         if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
         self.p.send("M140 S%f" % self.recovery_info["B"])
-        self.recovertemp = True
+        time.sleep(1)
         print("WAITING FOR TEMPERATURE")
 
     #  --------------------------------------------------------------
@@ -1630,16 +1631,20 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.output_gcode_stats()
         if self.shouldrecover:
             mv_buffer = self.RCBUFSIZE
-            ln_i = self.recovery_info["queueindex"]
-            while mv_buffer > 0:
-                ln_i = ln_i - 1
-                if self.fgcode.lines[ln_i].is_move:
-                    mv_buffer = mv_buffer-1
-            
+            ln_i = self.recovery_info["queueindex"] - 1
             previous_line = self.fgcode.lines[ln_i]
+            while mv_buffer > 0: # Move back to the last true move
+                if previous_line.is_move:
+                    mv_buffer = mv_buffer - 1
+                ln_i = ln_i - 1
+                previous_line = self.fgcode.lines[ln_i]
+
+            while (previous_line.x == None) or (previous_line.y == None): # Find an X and Y to start with
+                ln_i = ln_i - 1
+                previous_line = self.fgcode.lines[ln_i]
 
             self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
-            self.p.send("G0 Z%f F" % self.recovery_info["layer"]) # Move print head back down to normal position
+            self.p.send("G0 Z%f" % self.recovery_info["layer"]) # Move print head back down to normal position
             self.p.send("G0 E0") # Extrude filament to begin printing
             self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
             time.sleep(15)
@@ -1921,7 +1926,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             temps = parse_temperature_report(self.tempreadings)
             #self.recovery_info["temps"] = temps
 
-            if self.recovertemp:
+            if self.recovertemp < 5:
                 maxdiff = 0.0
 
                 for tempkey in temps:
@@ -1931,13 +1936,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                         maxdiff = tempdiff
                 # print("maxdiff = " + str(maxdiff))
                 if maxdiff < 2: 
-                    self.recovertemp = False
-                    self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
-                    self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
-                    self.p.send("G0 E-10")
-                    self.p.send("G28 X Y") # Home X and Y
-                    time.sleep(10)
-                    self.loadfile(None, self.getrecovergcodefile())
+                    self.recovertemp = self.recovertemp +  1
+                    if self.recovertemp == 5:
+                        self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+                        self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+                        self.p.send("G0 E-10")
+                        self.p.send("G28 X Y") # Home X and Y
+                        time.sleep(10)
+                        self.loadfile(None, self.getrecovergcodefile())
 
             # Special handling for first extruder
             if ("T0" in temps and temps["T0"][0]):
