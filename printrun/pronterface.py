@@ -1285,14 +1285,13 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.clearrecovery()
 
     def initfullrecover(self):
-        print("\nDEBUG: CALLED initfullrecover()\n")
+        # print("\nDEBUG: CALLED initfullrecover()\n")
         self.shouldrecover = True
         self.recovertemp = 0
         if not self.p.online:
             wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
             return
 
-        
         self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
         if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
         self.p.send("M140 S%f" % self.recovery_info["B"])
@@ -1300,7 +1299,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # print("WAITING FOR TEMPERATURE")
 
     def posttemprecover(self):
-        print("\nDEBUG: CALLED posttemprecover()\n")
+        # print("\nDEBUG: CALLED posttemprecover()\n")
         self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
         self.p.send("G0 E-20")
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
@@ -1310,7 +1309,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.loadfile(None, self.getrecovergcodefile())
 
     def postfileloadrecover(self):
-        print("\nDEBUG: CALLED postfileloadrecover()\n")
+        # print("\nDEBUG: CALLED postfileloadrecover()\n")
         mv_buffer = self.RCBUFSIZE + 1
         ln_i = self.recovery_info["queueindex"] - 1
         previous_line = self.fgcode.lines[ln_i]
@@ -1318,9 +1317,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         while mv_buffer >= 0: # Move back to the last true move
             if previous_line.x or previous_line.y or previous_line.z:
                 mv_buffer = mv_buffer - 1
-                print("\nDEBUG: mv_buffer = " + str(mv_buffer))
+                # print("\nDEBUG: mv_buffer = " + str(mv_buffer))
             ln_i = ln_i - 1
-            print("\nDEBUG: ln_i = " + str(ln_i))
+            # print("\nDEBUG: ln_i = " + str(ln_i))
             previous_line = self.fgcode.lines[ln_i]
 
         restart_index = ln_i
@@ -1334,7 +1333,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G0 Z%f" % (self.recovery_info["layer"])) # Move print head back down to normal position
         self.p.send("G0 E0") # Extrude filament to begin printing
         self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
-        print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
+        # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
         self.p.send("M412 R")
         time.sleep(10)
         self.p.startprint(self.fgcode, restart_index)
