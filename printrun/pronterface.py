@@ -1331,7 +1331,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
         time.sleep(5)
         self.p.send("G0 Z%f" % (self.recovery_info["layer"])) # Move print head back down to normal position
-        self.p.send("G0 E0") # Extrude filament to begin printing
+        self.p.send("G0 E0.1") # Extrude filament to begin printing
         self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
         # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
         self.p.send("M412 R")
