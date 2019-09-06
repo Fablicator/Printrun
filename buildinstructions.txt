@@ -66,6 +66,7 @@ cp fablicator.desktop ~/.local/share/applications/
 setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
 (install python 3.6)
 (install python extension compile environment, see https://wiki.python.org/moin/WindowsCompilers )
+^ ALSO INSTALL UNIVERSAL BUILD TOOLS
 (install git)
 git clone http://github.com/kliment/Printrun.git
 cd Printrun
