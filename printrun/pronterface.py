@@ -1305,7 +1305,11 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
         time.sleep(2)
         self.p.send("G28 X Y") # Home X and Y
-        time.sleep(15)
+        time.sleep(10)
+        if(self.recovery_info["tool"] != None):
+            self.p.send(self.recovery_info["tool"])
+        
+        time.sleep(5)
         self.loadfile(None, self.getrecovergcodefile())
 
     def postfileloadrecover(self):
@@ -1318,6 +1322,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             if previous_line.x or previous_line.y or previous_line.z:
                 mv_buffer = mv_buffer - 1
                 # print("\nDEBUG: mv_buffer = " + str(mv_buffer))
+            if previous_line.raw.startswith("T"): # Switch extruders as we move back through the GCode
+                self.p.send(previous_line.raw)
             ln_i = ln_i - 1
             # print("\nDEBUG: ln_i = " + str(ln_i))
             previous_line = self.fgcode.lines[ln_i]
@@ -1327,6 +1333,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         while (previous_line.x == None) or (previous_line.y == None): # Find an X and Y to start with
             ln_i = ln_i - 1
             previous_line = self.fgcode.lines[ln_i]
+
+            if previous_line.raw.startswith("T"):
+                self.p.send(previous_line.raw)
 
         self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
         time.sleep(5)
