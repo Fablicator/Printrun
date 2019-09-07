@@ -1866,6 +1866,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             if self.display_graph: wx.CallAfter(self.graph.SetFanPower, 0)
         elif gline.command.startswith("T"):
             tool = gline.command[1:]
+            self.tool_change_cb(tool)
             if hasattr(self, "extrudersel"): wx.CallAfter(self.extrudersel.SetValue, tool)
         if gline.is_move:
             self.sentglines.put_nowait(gline)
@@ -1938,11 +1939,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if self.settings.mainviz != "3D" or self.settings.trackcurrentlayer3d:
             wx.CallAfter(self.gviz.setlayer, newlayer)
 
-        # self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
-        # self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
-        # self.p.send("G0 E-10")
-        # self.p.send("G28 X Y") # Home X and Y
-        # self.loadfile(None, self.getrecovergcodefile())
+    def tool_change_cb(self, tool):
+        """Callback when the tool is changed"""
+        # print("\nDEBUG TOOL CHANGED TO -> " + tool + "\n")
+        self.recovery_info["tool"] = "T"+tool
 
     def update_tempdisplay(self):
         try:
