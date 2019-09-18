@@ -1246,15 +1246,21 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
-        info = json.dumps(recoveryinfo)
-        rcfilepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
-        rctmppath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo_tmp")
-        rc_file = open(rctmppath, "w")
-        rc_file.write(info)
-        rc_file.flush()
-        os.fsync(rc_file.fileno())
-        rc_file.close()
-        os.replace(rctmppath, rcfilepath)
+        def _recoverinfothread():
+            try:
+                info = json.dumps(recoveryinfo)
+                rcfilepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+                rctmppath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo_tmp")
+                rc_file = open(rctmppath, "w")
+                rc_file.write(info)
+                rc_file.flush()
+                os.fsync(rc_file.fileno())
+                rc_file.close()
+                os.replace(rctmppath, rcfilepath)
+            except:
+                pass
+        
+        threading.Thread(target = _recoverinfothread).start()
 
     def getrecovergcodefile(self):
         # print("DEBUG: CALLED getrecovergcodefile()")
@@ -1306,7 +1312,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         time.sleep(2)
         self.p.send("G28 X Y") # Home X and Y
         time.sleep(10)
-        if(self.recovery_info["tool"] != None):
+        if("tool" in self.recovery_info):
             self.p.send(self.recovery_info["tool"])
         
         time.sleep(5)
@@ -1986,9 +1992,16 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 if self.display_graph: wx.CallAfter(self.graph.SetExtruder0Temperature, hotend_temp0)
                 if self.display_gauges:wx.CallAfter(self.hottgauge0.SetValue, hotend_temp0)
 
-                setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
-                if setpoint is not None:
+                # setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
+                if ("T0" in temps and temps["T0"][1]):
+                    setpoint = float(temps["T0"][1])
                     self.recovery_info["T0"] = setpoint
+                elif ("T" in temps and temps["T"][1]):
+                    setpoint = float(temps["T"][1])
+                    self.recovery_info["T0"] = setpoint
+                else:
+                    setpoint = None
+                if setpoint is not None:
                     if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.hottgauge0.SetTarget, setpoint)
 
