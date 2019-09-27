@@ -152,6 +152,9 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
 
     # Hotend temp
     ## NEED CHANGES
+    root.set_temp_preset("bed", "unused")
+    root.set_temp_preset("else", "unused")
+
     add("htemp_label", wx.StaticText(parentpanel, -1, _("Heat:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
     htemp_choices = [root.temps[i] + " (" + i + ")" for i in sorted(root.temps.keys(), key = lambda x:root.temps[x])]
 
