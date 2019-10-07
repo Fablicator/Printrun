@@ -1232,11 +1232,15 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def canrecover(self):
         # print("DEBUG: CALLED canrecover()")
+        if not self.settings.powerrecover:
+            return False
         rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         return os.path.exists(rc_filepath)
 
     def getrecoverinfo(self):
         # print("DEBUG: CALLED getrecoverinfo()")
+        if not self.settings.powerrecover:
+            return
         rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         if not os.path.exists(rc_filepath): 
             return None
@@ -1247,6 +1251,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        if not self.settings.powerrecover:
+            return
         def _recoverinfothread():
             try:
                 info = json.dumps(recoveryinfo)
