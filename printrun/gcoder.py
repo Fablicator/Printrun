@@ -408,7 +408,7 @@ class GCode:
             # print("DEBUG " + str(true_line.raw))
             if true_line.raw.startswith("; KISSlicer - "):
                 # print(true_line.raw)
-                # print("FILE SLICED BY KISSlicer")
+                print("FILE SLICED BY KISSlicer")
                 using_kiss = True
 
             if true_line.raw.startswith("; Estimated Build Time:   "):

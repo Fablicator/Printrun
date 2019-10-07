@@ -267,8 +267,6 @@ class Settings:
     def __init__(self, root):
         # defaults here.
         # the initial value determines the type
-        self._add(BooleanSetting("powerrecover", False, _("Power off recovery"), _("Enable power down recovery"), "Experimental"))
-        
         self._add(StringSetting("port", "", _("Serial port"), _("Port used to communicate with printer")))
         self._add(ComboSetting("baudrate", 115200, self.__baudrate_list(), _("Baud rate"), _("Communications Speed")))
         self._add(BooleanSetting("tcp_streaming_mode", False, _("TCP streaming mode"), _("When using a TCP connection to the printer, the streaming mode will not wait for acks from the printer to send new commands. This will break things such as ETA prediction, but can result in smoother prints.")), root.update_tcp_streaming_mode)
@@ -297,7 +295,6 @@ class Settings:
         self._add(StringSetting("final_command", "", _("Final command"), _("Executable to run when the print is finished"), "External"))
         self._add(StringSetting("error_command", "", _("Error command"), _("Executable to run when an error occurs"), "External"))
         self._add(StringSetting("log_path", "", _("Log path"), _("Path to the log file. An empty path will log to the console."), "UI"))
-
 
         self._add(HiddenSetting("project_offset_x", 0.0))
         self._add(HiddenSetting("project_offset_y", 0.0))
