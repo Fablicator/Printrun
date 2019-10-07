@@ -85,8 +85,7 @@ for running:
 python fablicator.py
 
 for packaging:
-pip install pyinstaller -- THIS ONE MAY NOT WORK
-pip install git+https://github.com/Loran425/pyinstaller.git --DO THIS INSTEAD
+pip install pyinstaller
 pip install pypiwin32
 
 Stable versions
