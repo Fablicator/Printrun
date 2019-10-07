@@ -296,6 +296,8 @@ class Settings:
         self._add(StringSetting("error_command", "", _("Error command"), _("Executable to run when an error occurs"), "External"))
         self._add(StringSetting("log_path", "", _("Log path"), _("Path to the log file. An empty path will log to the console."), "UI"))
 
+        self._add(BooleanSetting("powerrecover", False, _("Power off recovery"), _("Enable power down recovery"), "Experimental"))
+
         self._add(HiddenSetting("project_offset_x", 0.0))
         self._add(HiddenSetting("project_offset_y", 0.0))
         self._add(HiddenSetting("project_interval", 2.0))
