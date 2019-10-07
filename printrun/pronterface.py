@@ -882,11 +882,11 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         info = wx.adv.AboutDialogInfo()
         info.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
-        info.SetName('Printrun')
-        info.SetVersion(printcore.__version__)
+        info.SetName('Fablicator Interface')
+        # info.SetVersion(printcore.__version__)
 
         description = _("Printrun is a pure Python 3D printing"
-                        " (and other types of CNC) host software.")
+                        " (and other types of CNC) host software. This software is a fork of Printrun.")
 
         description += "\n\n" + \
                        _("%.02fmm of filament have been extruded during prints") \
@@ -912,6 +912,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         info.SetLicence(licence)
         info.AddDeveloper('Kliment Yanev')
         info.AddDeveloper('Guillaume Seguin')
+
 
         wx.adv.AboutBox(info)
 
