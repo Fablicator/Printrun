@@ -753,8 +753,18 @@ class PronterWindow(MainWindow, pronsole.pronsole):
     def set_autoscrolldisable(self,e):
         self.autoscrolldisable = e.IsChecked()
 
-    def set_shutdownpostprint(self,e):
-        self.shutdownpostprint = e.IsChecked()
+    # def set_shutdownpostprint(self,e):
+    #     self.shutdownpostprint = e.IsChecked()
+
+    def toggleautoshutdown(self, event):
+        button = event.GetEventObject()
+        self.shutdownpostprint = not self.shutdownpostprint
+
+        if self.shutdownpostprint:
+            button.SetBackgroundColour('#5BC236')
+        else:
+            button.SetBackgroundColour('Default')
+            
 
     def sendline(self, e):
         command = self.commandbox.GetValue()
@@ -848,10 +858,10 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         m.Check(mItem.GetId(), self.autoscrolldisable)
         self.Bind(wx.EVT_MENU, self.set_autoscrolldisable, mItem)
 
-        mItem = m.AppendCheckItem(-1, _("Shutdown after print"),
-                                  _("Shutdown the computer after the print finishes"))
-        m.Check(mItem.GetId(), self.shutdownpostprint)
-        self.Bind(wx.EVT_MENU, self.set_shutdownpostprint, mItem)
+        # mItem = m.AppendCheckItem(-1, _("Shutdown after print"),
+        #                           _("Shutdown the computer after the print finishes"))
+        # m.Check(mItem.GetId(), self.shutdownpostprint)
+        # self.Bind(wx.EVT_MENU, self.set_shutdownpostprint, mItem)
 
         self.menustrip.Append(m, _("&Settings"))
         self.update_macros_menu()
