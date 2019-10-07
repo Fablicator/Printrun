@@ -176,6 +176,8 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.parse_cmdline(sys.argv[1:])
         self.autoscrolldisable=False
 
+        self.shutdownpostprint=False
+
         # FIXME: We need to initialize the main window after loading the
         # configs to restore the size, but this might have some unforeseen
         # consequences.
@@ -751,6 +753,9 @@ class PronterWindow(MainWindow, pronsole.pronsole):
     def set_autoscrolldisable(self,e):
         self.autoscrolldisable = e.IsChecked()
 
+    def set_shutdownpostprint(self,e):
+        self.shutdownpostprint = e.IsChecked()
+
     def sendline(self, e):
         command = self.commandbox.GetValue()
         if not len(command):
@@ -842,6 +847,11 @@ class PronterWindow(MainWindow, pronsole.pronsole):
                                   _("Disables automatic scrolling of the console when new text is added"))
         m.Check(mItem.GetId(), self.autoscrolldisable)
         self.Bind(wx.EVT_MENU, self.set_autoscrolldisable, mItem)
+
+        mItem = m.AppendCheckItem(-1, _("Shutdown after print"),
+                                  _("Shutdown the computer after the print finishes"))
+        m.Check(mItem.GetId(), self.shutdownpostprint)
+        self.Bind(wx.EVT_MENU, self.set_shutdownpostprint, mItem)
 
         self.menustrip.Append(m, _("&Settings"))
         self.update_macros_menu()
@@ -1678,6 +1688,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         """Callback on print end/pause"""
         pronsole.pronsole.endcb(self)
         if self.p.queueindex == 0:
+            
+            if self.shutdownpostprint:
+                os.system("shutdown /s /t 1")
+
             self.p.runSmallScript(self.endScript)
             if self.settings.display_progress_on_printer:
                 printer_progress_string = "M117 Finished Print"
