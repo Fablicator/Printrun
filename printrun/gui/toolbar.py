@@ -64,6 +64,13 @@ def MainToolbar(root, parentpanel = None, use_wrapsizer = False):
         root.resetbtn.Reparent(parentpanel)
     self.Add(root.resetbtn)
 
+    if not hasattr(root, "shutdownbtn"):
+        root.shutdownbtn = make_autosize_button(parentpanel, _("Auto off"), root.toggleautoshutdown, _("Shutdown printer after print"))
+        root.statefulControls.append(root.shutdownbtn)
+    else:
+        root.shutdownbtn.Reparent(parentpanel)
+    self.Add(root.shutdownbtn)
+
     self.AddStretchSpacer(prop = 1)
 
     root.loadbtn = make_autosize_button(parentpanel, _("Load file"), root.loadfile, _("Load a 3D model file"), self)
