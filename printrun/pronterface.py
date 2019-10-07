@@ -970,10 +970,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(StringSetting("gcview_color_current", "#00E5FFCC", _("3D view current layer moves color"), _("Color of moves in current layer in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_current_printed", "#196600CC", _("3D view printed current layer moves color"), _("Color of already printed moves from current layer in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StaticTextSetting("note1", _("Note:"), _("Changing some of these settings might require a restart to get effect"), group = "UI"))
-        self.settings._add(StaticTextSetting("break2exp", _(" "), _(" "), group = "Printer"))
-        self.settings._add(StaticTextSetting("breakexp", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
+        self.settings._add(StaticTextSetting("expspace", _(" "), _(" "), group = "Printer"))
+        self.settings._add(StaticTextSetting("expbreak", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
         self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
-        self.settings._add(StaticTextSetting("breakexp", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))self.settings._add(StaticTextSetting("noteexp", _("Warning:"), _("These features have been tested in most cases but haven't been tested rigorously enough to be enabled by default."), group = "Printer"))
+        self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True
         self.settings._add(recentfilessetting, self.update_recent_files)
@@ -1235,6 +1235,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def canrecover(self):
         # print("DEBUG: CALLED canrecover()")
+        if not self.settings.powerrecover:
+            return False
         rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         return os.path.exists(rc_filepath)
 
@@ -1250,6 +1252,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        if not self.settings.powerrecover:
+            return
         def _recoverinfothread():
             try:
                 info = json.dumps(recoveryinfo)
