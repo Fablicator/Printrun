@@ -794,10 +794,10 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # Tools Menu
         m = wx.Menu()
         self.Bind(wx.EVT_MENU, self.do_editgcode, m.Append(-1, _("&Edit..."), _(" Edit open file")))
-        self.Bind(wx.EVT_MENU, self.plate, m.Append(-1, _("Plater"), _(" Compose 3D models into a single plate")))
+        # self.Bind(wx.EVT_MENU, self.plate, m.Append(-1, _("Plater"), _(" Compose 3D models into a single plate")))
         self.Bind(wx.EVT_MENU, self.plate_gcode, m.Append(-1, _("G-Code Plater"), _(" Compose G-Codes into a single plate")))
         self.Bind(wx.EVT_MENU, self.exclude, m.Append(-1, _("Excluder"), _(" Exclude parts of the bed from being printed")))
-        self.Bind(wx.EVT_MENU, self.project, m.Append(-1, _("Projector"), _(" Project slices")))
+        # self.Bind(wx.EVT_MENU, self.project, m.Append(-1, _("Projector"), _(" Project slices")))
         self.Bind(wx.EVT_MENU,
                   self.show_spool_manager,
                   m.Append(-1, _("Spool Manager"),
@@ -809,7 +809,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.recoverbtn = m.Append(-1, _("Recover"), _(" Recover previous print after a disconnect (homes X, Y, restores Z and E status)"))
         self.recoverbtn.Disable = lambda *a: self.recoverbtn.Enable(False)
         self.Bind(wx.EVT_MENU, self.recover, self.recoverbtn)
-        self.menustrip.Append(m, _("&Advanced"))
+        # self.menustrip.Append(m, _("&Advanced"))
 
         if self.settings.slic3rintegration:
             m = wx.Menu()
@@ -836,7 +836,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.Bind(wx.EVT_MENU, self.new_macro, self.macros_menu.Append(-1, _("<&New...>")))
         self.Bind(wx.EVT_MENU, lambda *e: PronterOptions(self), m.Append(-1, _("&Options"), _(" Options dialog")))
 
-        self.Bind(wx.EVT_MENU, lambda x: threading.Thread(target = lambda: self.do_slice("set")).start(), m.Append(-1, _("Slicing settings"), _(" Adjust slicing settings")))
+        # self.Bind(wx.EVT_MENU, lambda x: threading.Thread(target = lambda: self.do_slice("set")).start(), m.Append(-1, _("Slicing settings"), _(" Adjust slicing settings")))
 
         mItem = m.AppendCheckItem(-1, _("Debug communications"),
                                   _("Print all G-code sent to and received from the printer."))
