@@ -299,7 +299,7 @@ class MainWindow(wx.Frame):
     def gui_set_disconnected(self):
         self.printbtn.Disable()
         self.pausebtn.Disable()
-        self.recoverbtn.Disable()
+        # self.recoverbtn.Disable()
         for control in self.printerControls:
             control.Disable()
         self.xyb.disable()

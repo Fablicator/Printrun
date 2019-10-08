@@ -66,6 +66,7 @@ cp fablicator.desktop ~/.local/share/applications/
 setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
 (install python 3.6)
 (install python extension compile environment, see https://wiki.python.org/moin/WindowsCompilers )
+^ ALSO INSTALL UNIVERSAL BUILD TOOLS
 (install git)
 git clone http://github.com/kliment/Printrun.git
 cd Printrun
@@ -84,11 +85,13 @@ for running:
 python fablicator.py
 
 for packaging:
-pip install pyinstaller -- THIS ONE MAY NOT WORK
-pip install git+https://github.com/Loran425/pyinstaller.git --DO THIS INSTEAD
+pip install pyinstaller
 pip install pypiwin32
 
-For a directory (THIS IS MORE STABLE)
+Stable versions
 pyi-makespec -F --add-data "./images/*;images" --add-data "./*.png;." --add-data "./*.ico;." -w -i ./images/fablicator.ico fablicator.py
+
+Developmental versions
+pyi-makespec -F --add-data "./images/*;images" --add-data "./*.png;." --add-data "./*.ico;." -w -i ./images/fablicatordev.ico fablicator.py
 
 pyinstaller --clean fablicator.spec -y

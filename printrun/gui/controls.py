@@ -218,10 +218,10 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     speedsizer = wx.BoxSizer(wx.HORIZONTAL)
     speedsizer.Add(wx.StaticText(speedpanel, -1, _("Print speed:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
 
-    root.speed_slider = wx.Slider(speedpanel, -1, 100, 1, 300)
+    root.speed_slider = wx.Slider(speedpanel, -1, 100, 1, 150)
     speedsizer.Add(root.speed_slider, 1, flag = wx.EXPAND)
 
-    root.speed_spin = wx.SpinCtrlDouble(speedpanel, -1, initial = 100, min = 1, max = 300, style = wx.ALIGN_LEFT, size = (115, -1))
+    root.speed_spin = wx.SpinCtrlDouble(speedpanel, -1, initial = 100, min = 1, max = 150, style = wx.ALIGN_LEFT, size = (115, -1))
     root.speed_spin.SetDigits(0)
     speedsizer.Add(root.speed_spin, 0, flag = wx.ALIGN_CENTER_VERTICAL)
     root.speed_label = wx.StaticText(speedpanel, -1, _("%"))
@@ -253,10 +253,10 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     flowsizer = wx.BoxSizer(wx.HORIZONTAL)
     flowsizer.Add(wx.StaticText(flowpanel, -1, _("Print flow:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
 
-    root.flow_slider = wx.Slider(flowpanel, -1, 100, 1, 300)
+    root.flow_slider = wx.Slider(flowpanel, -1, 100, 1, 150)
     flowsizer.Add(root.flow_slider, 1, flag = wx.EXPAND)
 
-    root.flow_spin = wx.SpinCtrlDouble(flowpanel, -1, initial = 100, min = 1, max = 300, style = wx.ALIGN_LEFT, size = (115, -1))
+    root.flow_spin = wx.SpinCtrlDouble(flowpanel, -1, initial = 100, min = 1, max = 150, style = wx.ALIGN_LEFT, size = (115, -1))
     flowsizer.Add(root.flow_spin, 0, flag = wx.ALIGN_CENTER_VERTICAL)
     root.flow_label = wx.StaticText(flowpanel, -1, _("%"))
     flowsizer.Add(root.flow_label, flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)

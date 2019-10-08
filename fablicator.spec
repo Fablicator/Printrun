@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['fablicator.py'],
-             pathex=['C:\\Users\\kcald\\Documents\\GitHub\\Printrun'],
+             pathex=['C:\\Users\\kcald\\Documents\\GitRepos\\Fablicator\\Printrun'],
              binaries=[],
              datas=[('./images/*', 'images'), ('./*.png', '.'), ('./*.ico', '.')],
              hiddenimports=[],
@@ -30,4 +30,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False , icon='images\\fablicator.ico')
+          console=False , icon='images\\fablicatordev.ico')

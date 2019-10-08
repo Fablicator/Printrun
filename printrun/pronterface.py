@@ -153,6 +153,11 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.pauseScript = None #"pause.gcode"
         self.endScript = None #"end.gcode"
 
+        self.recovery_info = {}
+        self.shouldrecover = False
+        self.recovertemp = 0 # Number of times the temperature was correct
+        self.RCBUFSIZE = 16 + 4 # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+        
         self.filename = filename
 
         self.capture_skip = {}
@@ -804,10 +809,10 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # Tools Menu
         m = wx.Menu()
         self.Bind(wx.EVT_MENU, self.do_editgcode, m.Append(-1, _("&Edit..."), _(" Edit open file")))
-        self.Bind(wx.EVT_MENU, self.plate, m.Append(-1, _("Plater"), _(" Compose 3D models into a single plate")))
+        # self.Bind(wx.EVT_MENU, self.plate, m.Append(-1, _("Plater"), _(" Compose 3D models into a single plate")))
         self.Bind(wx.EVT_MENU, self.plate_gcode, m.Append(-1, _("G-Code Plater"), _(" Compose G-Codes into a single plate")))
         self.Bind(wx.EVT_MENU, self.exclude, m.Append(-1, _("Excluder"), _(" Exclude parts of the bed from being printed")))
-        self.Bind(wx.EVT_MENU, self.project, m.Append(-1, _("Projector"), _(" Project slices")))
+        # self.Bind(wx.EVT_MENU, self.project, m.Append(-1, _("Projector"), _(" Project slices")))
         self.Bind(wx.EVT_MENU,
                   self.show_spool_manager,
                   m.Append(-1, _("Spool Manager"),
@@ -815,11 +820,11 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.menustrip.Append(m, _("&Tools"))
 
         # Advanced Menu
-        m = wx.Menu()
-        self.recoverbtn = m.Append(-1, _("Recover"), _(" Recover previous print after a disconnect (homes X, Y, restores Z and E status)"))
-        self.recoverbtn.Disable = lambda *a: self.recoverbtn.Enable(False)
-        self.Bind(wx.EVT_MENU, self.recover, self.recoverbtn)
-        self.menustrip.Append(m, _("&Advanced"))
+        # m = wx.Menu()
+        # self.recoverbtn = m.Append(-1, _("Recover"), _(" Recover previous print after a disconnect (homes X, Y, restores Z and E status)"))
+        # self.recoverbtn.Disable = lambda *a: self.recoverbtn.Enable(False)
+        # self.Bind(wx.EVT_MENU, self.recover, self.recoverbtn)
+        # self.menustrip.Append(m, _("&Advanced"))
 
         if self.settings.slic3rintegration:
             m = wx.Menu()
@@ -846,7 +851,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.Bind(wx.EVT_MENU, self.new_macro, self.macros_menu.Append(-1, _("<&New...>")))
         self.Bind(wx.EVT_MENU, lambda *e: PronterOptions(self), m.Append(-1, _("&Options"), _(" Options dialog")))
 
-        self.Bind(wx.EVT_MENU, lambda x: threading.Thread(target = lambda: self.do_slice("set")).start(), m.Append(-1, _("Slicing settings"), _(" Adjust slicing settings")))
+        # self.Bind(wx.EVT_MENU, lambda x: threading.Thread(target = lambda: self.do_slice("set")).start(), m.Append(-1, _("Slicing settings"), _(" Adjust slicing settings")))
 
         mItem = m.AppendCheckItem(-1, _("Debug communications"),
                                   _("Print all G-code sent to and received from the printer."))
@@ -869,7 +874,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         m = wx.Menu()
         self.Bind(wx.EVT_MENU, self.about,
-                  m.Append(-1, _("&About Printrun"), _("Show about dialog")))
+                  m.Append(-1, _("&About"), _("Show about dialog")))
         self.menustrip.Append(m, _("&Help"))
 
     def project(self, event):
@@ -897,19 +902,18 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         info = wx.adv.AboutDialogInfo()
         info.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
-        info.SetName('Printrun')
-        info.SetVersion(printcore.__version__)
+        info.SetName('Fablicator Interface')
+        # info.SetVersion(printcore.__version__)
 
-        description = _("Printrun is a pure Python 3D printing"
-                        " (and other types of CNC) host software.")
+        description = """This software is a modified version of Printrun, a pure python CNC interface."""
 
         description += "\n\n" + \
                        _("%.02fmm of filament have been extruded during prints") \
                        % self.settings.total_filament_used
 
         info.SetDescription(description)
-        info.SetCopyright('(C) 2011 - 2018')
-        info.SetWebSite('https://github.com/kliment/Printrun')
+        # info.SetCopyright('(C) 2011 - 2018')
+        info.SetWebSite('https://github.com/Fablicator/Printrun', "Source code on GitHub")
 
         licence = """\
 Printrun is free software: you can redistribute it and/or modify it under the
@@ -925,8 +929,9 @@ You should have received a copy of the GNU General Public License along with
 Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
         info.SetLicence(licence)
-        info.AddDeveloper('Kliment Yanev')
-        info.AddDeveloper('Guillaume Seguin')
+        info.AddDeveloper('Kliment Yanev, original project')
+        info.AddDeveloper('Guillaume Seguin, original project')
+        info.AddDeveloper('Fablicator')
 
         wx.adv.AboutBox(info)
 
@@ -935,28 +940,27 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     #  --------------------------------------------------------------
 
     def _add_settings(self, size):
-        self.settings._add(BooleanSetting("monitor", True, _("Monitor printer status"), _("Regularly monitor printer temperatures (required to have functional temperature graph or gauges)"), "Printer"), self.update_monitor)
-        self.settings._add(StringSetting("simarrange_path", "", _("Simarrange command"), _("Path to the simarrange binary to use in the STL plater"), "External"))
-        self.settings._add(BooleanSetting("circular_bed", False, _("Circular build platform"), _("Draw a circular (or oval) build platform instead of a rectangular one"), "Printer"), self.update_bed_viz)
+        self.settings._add(HiddenSetting("monitor", True, _("Monitor printer status"), _("Regularly monitor printer temperatures (required to have functional temperature graph or gauges)"), "Printer"), self.update_monitor)
+        self.settings._add(HiddenSetting("simarrange_path", "", _("Simarrange command"), _("Path to the simarrange binary to use in the STL plater"), "External"))
+        self.settings._add(HiddenSetting("circular_bed", False, _("Circular build platform"), _("Draw a circular (or oval) build platform instead of a rectangular one"), "Printer"), self.update_bed_viz)
         self.settings._add(SpinSetting("extruders", 0, 1, 2, _("Extruders count"), _("Number of extruders"), "Printer"))
-        self.settings._add(BooleanSetting("clamp_jogging", False, _("Clamp manual moves"), _("Prevent manual moves from leaving the specified build dimensions"), "Printer"))
+        self.settings._add(HiddenSetting("clamp_jogging", False, _("Clamp manual moves"), _("Prevent manual moves from leaving the specified build dimensions"), "Printer"))
         self.settings._add(BooleanSetting("display_progress_on_printer", False, _("Display progress on printer"), _("Show progress on printers display (sent via M117, might not be supported by all printers)"), "Printer"))
         self.settings._add(SpinSetting("printer_progress_update_interval", 10., 0, 120, _("Printer progress update interval"), _("Interval in which pronterface sends the progress to the printer if enabled, in seconds"), "Printer"))
         self.settings._add(ComboSetting("uimode", _("Standard"), [_("Standard"), _("Compact"), ], _("Interface mode"), _("Standard interface is a one-page, three columns layout with controls/visualization/log\nCompact mode is a one-page, two columns layout with controls + log/visualization"), "UI"), self.reload_ui)
-        #self.settings._add(ComboSetting("uimode", _("Standard"), [_("Standard"), _("Compact"), _("Tabbed"), _("Tabbed with platers")], _("Interface mode"), _("Standard interface is a one-page, three columns layout with controls/visualization/log\nCompact mode is a one-page, two columns layout with controls + log/visualization"), "UI"), self.reload_ui)
         self.settings._add(ComboSetting("controlsmode", "Standard", ["Standard", "Mini"], _("Controls mode"), _("Standard controls include all controls needed for printer setup and calibration, while Mini controls are limited to the ones needed for daily printing"), "UI"), self.reload_ui)
-        self.settings._add(BooleanSetting("slic3rintegration", False, _("Enable Slic3r integration"), _("Add a menu to select Slic3r profiles directly from Pronterface"), "UI"), self.reload_ui)
-        self.settings._add(BooleanSetting("slic3rupdate", False, _("Update Slic3r default presets"), _("When selecting a profile in Slic3r integration menu, also save it as the default Slic3r preset"), "UI"))
+        self.settings._add(HiddenSetting("slic3rintegration", False, _("Enable Slic3r integration"), _("Add a menu to select Slic3r profiles directly from Pronterface"), "UI"), self.reload_ui)
+        self.settings._add(HiddenSetting("slic3rupdate", False, _("Update Slic3r default presets"), _("When selecting a profile in Slic3r integration menu, also save it as the default Slic3r preset"), "UI"))
         self.settings._add(ComboSetting("mainviz", "3D", ["2D", "3D", "None"], _("Main visualization"), _("Select visualization for main window."), "Viewer"), self.reload_ui)
-        self.settings._add(BooleanSetting("viz3d", False, _("Use 3D in GCode viewer window"), _("Use 3D mode instead of 2D layered mode in the visualization window"), "Viewer"), self.reload_ui)
+        self.settings._add(BooleanSetting("viz3d", True, _("Use 3D in GCode viewer window"), _("Use 3D mode instead of 2D layered mode in the visualization window"), "Viewer"), self.reload_ui)
         self.settings._add(StaticTextSetting("separator_3d_viewer", _("3D viewer options"), "", group = "Viewer"))
         self.settings._add(BooleanSetting("light3d", False, _("Use a lighter 3D visualization"), _("Use a lighter visualization with simple lines instead of extruded paths for 3D viewer"), "Viewer"), self.reload_ui)
         self.settings._add(ComboSetting("antialias3dsamples", "0", ["0", "2", "4", "8"], _("Number of anti-aliasing samples"), _("Amount of anti-aliasing samples used in the 3D viewer"), "Viewer"), self.reload_ui)
         self.settings._add(BooleanSetting("trackcurrentlayer3d", False, _("Track current layer in main 3D view"), _("Track the currently printing layer in the main 3D visualization"), "Viewer"))
         self.settings._add(FloatSpinSetting("gcview_path_width", 0.4, 0.01, 2, _("Extrusion width for 3D viewer"), _("Width of printed path in 3D viewer"), "Viewer", increment = 0.05), self.update_gcview_params)
         self.settings._add(FloatSpinSetting("gcview_path_height", 0.3, 0.01, 2, _("Layer height for 3D viewer"), _("Height of printed path in 3D viewer"), "Viewer", increment = 0.05), self.update_gcview_params)
-        self.settings._add(BooleanSetting("tempgraph", True, _("Display temperature graph"), _("Display time-lapse temperature graph"), "UI"), self.reload_ui)
-        self.settings._add(BooleanSetting("tempgauges", False, _("Display temperature gauges"), _("Display graphical gauges for temperatures visualization"), "UI"), self.reload_ui)
+        self.settings._add(BooleanSetting("tempgraph", False, _("Display temperature graph"), _("Display time-lapse temperature graph"), "UI"), self.reload_ui)
+        self.settings._add(BooleanSetting("tempgauges", True, _("Display temperature gauges"), _("Display graphical gauges for temperatures visualization"), "UI"), self.reload_ui)
         self.settings._add(BooleanSetting("lockbox", False, _("Display interface lock checkbox"), _("Display a checkbox that, when check, locks most of Pronterface"), "UI"), self.reload_ui)
         self.settings._add(BooleanSetting("lockonstart", False, _("Lock interface upon print start"), _("If lock checkbox is enabled, lock the interface when starting a print"), "UI"))
         self.settings._add(BooleanSetting("refreshwhenloading", True, _("Update UI during G-Code load"), _("Regularly update visualization during the load of a G-Code file"), "UI"))
@@ -978,13 +982,17 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(StringSetting("gcview_color_travel", "#99999999", _("3D view travel moves color"), _("Color of travel moves in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_tool0", "#FF000099", _("3D view print moves color"), _("Color of print moves with tool 0 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_tool1", "#AC0DFF99", _("3D view tool 1 moves color"), _("Color of print moves with tool 1 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
-        self.settings._add(StringSetting("gcview_color_tool2", "#FFCE0099", _("3D view tool 2 moves color"), _("Color of print moves with tool 2 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
-        self.settings._add(StringSetting("gcview_color_tool3", "#FF009F99", _("3D view tool 3 moves color"), _("Color of print moves with tool 3 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
-        self.settings._add(StringSetting("gcview_color_tool4", "#00FF8F99", _("3D view tool 4 moves color"), _("Color of print moves with tool 4 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
+        self.settings._add(HiddenSetting("gcview_color_tool2", "#FFCE0099", _("3D view tool 2 moves color"), _("Color of print moves with tool 2 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
+        self.settings._add(HiddenSetting("gcview_color_tool3", "#FF009F99", _("3D view tool 3 moves color"), _("Color of print moves with tool 3 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
+        self.settings._add(HiddenSetting("gcview_color_tool4", "#00FF8F99", _("3D view tool 4 moves color"), _("Color of print moves with tool 4 in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_printed", "#33BF0099", _("3D view printed moves color"), _("Color of printed moves in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_current", "#00E5FFCC", _("3D view current layer moves color"), _("Color of moves in current layer in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StringSetting("gcview_color_current_printed", "#196600CC", _("3D view printed current layer moves color"), _("Color of already printed moves from current layer in 3D view"), "Colors"), self.update_gcview_colors, validate = check_rgba_color)
         self.settings._add(StaticTextSetting("note1", _("Note:"), _("Changing some of these settings might require a restart to get effect"), group = "UI"))
+        self.settings._add(StaticTextSetting("expspace", _(" "), _(" "), group = "Printer"))
+        self.settings._add(StaticTextSetting("expbreak", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
+        self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
+        self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True
         self.settings._add(recentfilessetting, self.update_recent_files)
@@ -1188,8 +1196,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.set("port", port)
         if baud != self.settings.baudrate:
             self.set("baudrate", str(baud))
-        if self.predisconnect_mainqueue:
-            self.recoverbtn.Enable()
+        # if self.predisconnect_mainqueue:
+        #     self.recoverbtn.Enable()
 
     def store_predisconnect_state(self):
         self.predisconnect_mainqueue = self.p.mainqueue
@@ -1239,6 +1247,142 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.paused = 0
             wx.CallAfter(self.toolbarsizer.Layout)
         dlg.Destroy()
+
+    #  --------------------------------------------------------------
+    #  Shutdown recovery handling
+    #  --------------------------------------------------------------
+
+    def canrecover(self):
+        # print("DEBUG: CALLED canrecover()")
+        if not self.settings.powerrecover:
+            return False
+        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        return os.path.exists(rc_filepath)
+
+    def getrecoverinfo(self):
+        # print("DEBUG: CALLED getrecoverinfo()")
+        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        if not os.path.exists(rc_filepath): 
+            return None
+        rc_file = open(rc_filepath, "r")
+        info = json.loads(rc_file.read())
+        rc_file.close()
+        return info
+    
+    def setrecoverinfo(self, recoveryinfo):
+        # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        if not self.settings.powerrecover:
+            return
+        def _recoverinfothread():
+            try:
+                info = json.dumps(recoveryinfo)
+                rcfilepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+                rctmppath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo_tmp")
+                rc_file = open(rctmppath, "w")
+                rc_file.write(info)
+                rc_file.flush()
+                os.fsync(rc_file.fileno())
+                rc_file.close()
+                os.replace(rctmppath, rcfilepath)
+            except:
+                pass
+        
+        threading.Thread(target = _recoverinfothread).start()
+
+    def getrecovergcodefile(self):
+        # print("DEBUG: CALLED getrecovergcodefile()")
+        return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+    
+    def setrecovergcode(self, gcode):
+        # print("DEBUG: CALLED setrecovergcode( gcode )")
+        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
+        rc_file.write(gcode)
+        rc_file.close()
+    
+    def clearrecovery(self):
+        # print("DEBUG: CALLED clearrecovery()")
+        rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+        
+        os.remove(rc_info)
+        # os.remove(rc_gcode)
+
+    def recover_prompt(self):
+        # print("DEBUG: CALLED recover_prompt()")
+        dlg = wx.MessageDialog(None, "Do you want to recover the last print?",'Shutdown',wx.YES_NO)
+        result = dlg.ShowModal()
+        if result == wx.ID_YES:
+            self.recovery_info = self.getrecoverinfo()
+            self.initfullrecover()
+        else:
+            self.clearrecovery()
+
+    def initfullrecover(self):
+        # print("\nDEBUG: CALLED initfullrecover()\n")
+        self.shouldrecover = True
+        self.recovertemp = 0
+        if not self.p.online:
+            wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
+            return
+
+        self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
+        if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
+        self.p.send("M140 S%f" % self.recovery_info["B"])
+        time.sleep(1)
+        # print("WAITING FOR TEMPERATURE")
+
+    def posttemprecover(self):
+        # print("\nDEBUG: CALLED posttemprecover()\n")
+        self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+        self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        time.sleep(1)
+        if(self.recovery_info["copymode"]): self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        self.p.send("G28 X Y") # Home X and Y
+        self.p.send("G0 E-20")
+        time.sleep(10)
+        if("tool" in self.recovery_info): # Recover which head we were using
+            self.p.send(self.recovery_info["tool"])
+        
+        time.sleep(5)
+        self.loadfile(None, self.getrecovergcodefile())
+
+    def postfileloadrecover(self):
+        # print("\nDEBUG: CALLED postfileloadrecover()\n")
+        mv_buffer = self.RCBUFSIZE + 1
+        ln_i = self.recovery_info["queueindex"] - 1
+        previous_line = self.fgcode.lines[ln_i]
+        restart_index = 0
+        while mv_buffer >= 0: # Move back to the last true move
+            if previous_line.x or previous_line.y or previous_line.z:
+                mv_buffer = mv_buffer - 1
+                # print("\nDEBUG: mv_buffer = " + str(mv_buffer))
+            if previous_line.raw.startswith("T"): # Switch extruders as we move back through the GCode
+                self.p.send(previous_line.raw)
+            ln_i = ln_i - 1
+            # print("\nDEBUG: ln_i = " + str(ln_i))
+            previous_line = self.fgcode.lines[ln_i]
+
+        restart_index = ln_i
+            
+        while (previous_line.x == None) or (previous_line.y == None): # Find an X and Y to start with
+            ln_i = ln_i - 1
+            previous_line = self.fgcode.lines[ln_i]
+
+            if previous_line.raw.startswith("T"):
+                self.p.send(previous_line.raw)
+
+        self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
+        time.sleep(5)
+        self.p.send("G0 Z%f" % (self.recovery_info["layer"])) # Move print head back down to normal position
+        self.p.send("G0 E0.1") # Extrude filament to begin printing
+        self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
+        # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
+        self.p.send("M412 R")
+        time.sleep(10)
+        self.p.startprint(self.fgcode, restart_index)
+        self.on_startprint()
+        self.shouldrecover = False
 
     #  --------------------------------------------------------------
     #  Print/upload handling
@@ -1559,13 +1703,16 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.printbtn.SetLabel(_("Print"))
         self.pausebtn.SetLabel(_("Pause"))
         self.pausebtn.Disable()
-        self.recoverbtn.Disable()
+        # self.recoverbtn.Disable()
         if failed==False and self.p.online:
             self.printbtn.Enable()
         self.toolbarsizer.Layout()
         self.viz_last_layer = None
         if print_stats:
             self.output_gcode_stats()
+        if self.shouldrecover:
+            self.postfileloadrecover()
+
 
     def calculate_remaining_filament(self, length, extruder = 0):
         """
@@ -1714,7 +1861,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         """Callback when printer goes online"""
         self.log(_("Printer is now online."))
         wx.CallAfter(self.online_gui)
-
+        if self.canrecover():
+            self.recover_prompt()
+        else:
+            print("No recovery file")
     def online_gui(self):
         """Callback when printer goes online (graphical bits)"""
         self.connectbtn.SetLabel(_("Disconnect"))
@@ -1759,6 +1909,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             if self.display_graph: wx.CallAfter(self.graph.SetFanPower, 0)
         elif gline.command.startswith("T"):
             tool = gline.command[1:]
+            self.tool_change_cb(tool)
             if hasattr(self, "extrudersel"): wx.CallAfter(self.extrudersel.SetValue, tool)
         if gline.is_move:
             self.sentglines.put_nowait(gline)
@@ -1820,6 +1971,20 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 wx.CallAfter(self.gwindow.set_current_gline, gline)
             if hasattr(self.gviz, "set_current_gline"):
                 wx.CallAfter(self.gviz.set_current_gline, gline)
+            if self.p.printing and not self.shouldrecover:
+                self.recovery_info["layer"] = self.curlayer
+                self.recovery_info["queueindex"] = self.p.queueindex
+                self.setrecoverinfo(self.recovery_info)
+        
+        if gline.raw.lstrip().startswith("M605"): # Check command first to avoid iterative check for every sent command
+            if all(c in gline.raw for c in ["M605", "S2", "X"]):
+                for op in gline.raw.split():
+                    if op.startswith("X"):
+                        self.recovery_info["copydistance"] = op[1:]
+                self.recovery_info["copymode"] = True
+            if all(c in gline.raw for c in ["M605", "S0"]): # Independent mode
+                self.recovery_info["copymode"] = False
+
 
     def layer_change_cb(self, newlayer):
         """Callback when the printed layer changed"""
@@ -1827,9 +1992,28 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if self.settings.mainviz != "3D" or self.settings.trackcurrentlayer3d:
             wx.CallAfter(self.gviz.setlayer, newlayer)
 
+    def tool_change_cb(self, tool):
+        """Callback when the tool is changed"""
+        # print("\nDEBUG TOOL CHANGED TO -> " + tool + "\n")
+        self.recovery_info["tool"] = "T"+tool
+
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
+
+            if self.shouldrecover and self.recovertemp < 5:
+                maxdiff = 0.0
+
+                for tempkey in temps:
+                    tempdiff = float(temps[tempkey][1]) - float(temps[tempkey][0])
+                    # print("tempdiff = " + str(tempdiff))
+                    if tempdiff > maxdiff:
+                        maxdiff = tempdiff
+                # print("maxdiff = " + str(maxdiff))
+                if maxdiff < 2: 
+                    self.recovertemp = self.recovertemp +  1
+                    if self.recovertemp == 5:
+                        self.posttemprecover()
 
             # Special handling for first extruder
             if ("T0" in temps and temps["T0"][0]):
@@ -1838,14 +2022,22 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 hotend_temp0 = float(temps["T"][0])
             else:
                 hotend_temp0 = None
-
+            # print(temps)
             hotend_temp1 = float(temps["T1"][0]) if ("T1" in temps and temps["T1"][0]) else None
             
             if hotend_temp0 is not None:
                 if self.display_graph: wx.CallAfter(self.graph.SetExtruder0Temperature, hotend_temp0)
                 if self.display_gauges:wx.CallAfter(self.hottgauge0.SetValue, hotend_temp0)
 
-                setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
+                # setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
+                if ("T0" in temps and temps["T0"][1]):
+                    setpoint = float(temps["T0"][1])
+                    self.recovery_info["T0"] = setpoint
+                elif ("T" in temps and temps["T"][1]):
+                    setpoint = float(temps["T"][1])
+                    self.recovery_info["T0"] = setpoint
+                else:
+                    setpoint = None
                 if setpoint is not None:
                     if self.display_graph: wx.CallAfter(self.graph.SetExtruder0TargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.hottgauge0.SetTarget, setpoint)
@@ -1918,6 +2110,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         return False
 
     def recvcb(self, l):
+
+        # if self.p.printing and not self.shouldrecover:
+        #     self.recovery_info["layer"] = self.curlayer
+
+        #     if self.fgcode.lines[self.p.queueindex].is_move:
+        #         self.recovery_info["queueindex"] = self.p.queueindex
+        #     self.setrecoverinfo(self.recovery_info)
+
         l = l.rstrip()
         if not self.recvcb_actions(l):
             report_type = self.recvcb_report(l)

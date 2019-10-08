@@ -404,6 +404,7 @@ class printcore():
         return reduce(lambda x, y: x ^ y, map(ord, command))
 
     def startprint(self, gcode, startindex = 0):
+        # print("DEBUG: CALLED startprint(startindex = " + str(startindex) + ")")
         """Start a print, gcode is an array of gcode commands.
         returns True on success, False if already printing.
         The print queue will be replaced with the contents of the data array,
