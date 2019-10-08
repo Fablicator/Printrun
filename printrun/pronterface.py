@@ -854,7 +854,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         m = wx.Menu()
         self.Bind(wx.EVT_MENU, self.about,
-                  m.Append(-1, _("&About Printrun"), _("Show about dialog")))
+                  m.Append(-1, _("&About"), _("Show about dialog")))
         self.menustrip.Append(m, _("&Help"))
 
     def project(self, event):
@@ -882,19 +882,18 @@ class PronterWindow(MainWindow, pronsole.pronsole):
 
         info = wx.adv.AboutDialogInfo()
         info.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
-        info.SetName('Printrun')
-        info.SetVersion(printcore.__version__)
+        info.SetName('Fablicator Interface')
+        # info.SetVersion(printcore.__version__)
 
-        description = _("Printrun is a pure Python 3D printing"
-                        " (and other types of CNC) host software.")
+        description = """This software is a modified version of Printrun, a pure python CNC interface."""
 
         description += "\n\n" + \
                        _("%.02fmm of filament have been extruded during prints") \
                        % self.settings.total_filament_used
 
         info.SetDescription(description)
-        info.SetCopyright('(C) 2011 - 2018')
-        info.SetWebSite('https://github.com/kliment/Printrun')
+        # info.SetCopyright('(C) 2011 - 2018')
+        info.SetWebSite('https://github.com/Fablicator/Printrun', "Source code on GitHub")
 
         licence = """\
 Printrun is free software: you can redistribute it and/or modify it under the
@@ -910,8 +909,9 @@ You should have received a copy of the GNU General Public License along with
 Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
         info.SetLicence(licence)
-        info.AddDeveloper('Kliment Yanev')
-        info.AddDeveloper('Guillaume Seguin')
+        info.AddDeveloper('Kliment Yanev, original project')
+        info.AddDeveloper('Guillaume Seguin, original project')
+        info.AddDeveloper('Fablicator')
 
         wx.adv.AboutBox(info)
 
