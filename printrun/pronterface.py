@@ -1954,6 +1954,13 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.recovery_info["layer"] = self.curlayer
                 self.recovery_info["queueindex"] = self.p.queueindex
                 self.setrecoverinfo(self.recovery_info)
+        
+        if gline.raw.lstrip().startswith("M605"): # Check command first to avoid iterative check for every sent command
+            if all(c in gline.raw for c in ["M605", "S2", "X"]):
+                self.recovery_info["copymode"] = True
+            if all(c in gline.raw for c in ["M605", "S0", "X"]): # Independent mode
+                self.recovery_info["copymode"] = False
+
 
     def layer_change_cb(self, newlayer):
         """Callback when the printed layer changed"""
