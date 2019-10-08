@@ -805,11 +805,11 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.menustrip.Append(m, _("&Tools"))
 
         # Advanced Menu
-        m = wx.Menu()
-        self.recoverbtn = m.Append(-1, _("Recover"), _(" Recover previous print after a disconnect (homes X, Y, restores Z and E status)"))
-        self.recoverbtn.Disable = lambda *a: self.recoverbtn.Enable(False)
-        self.Bind(wx.EVT_MENU, self.recover, self.recoverbtn)
-        self.menustrip.Append(m, _("&Advanced"))
+        # m = wx.Menu()
+        # self.recoverbtn = m.Append(-1, _("Recover"), _(" Recover previous print after a disconnect (homes X, Y, restores Z and E status)"))
+        # self.recoverbtn.Disable = lambda *a: self.recoverbtn.Enable(False)
+        # self.Bind(wx.EVT_MENU, self.recover, self.recoverbtn)
+        # self.menustrip.Append(m, _("&Advanced"))
 
         if self.settings.slic3rintegration:
             m = wx.Menu()
@@ -1176,8 +1176,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             self.set("port", port)
         if baud != self.settings.baudrate:
             self.set("baudrate", str(baud))
-        if self.predisconnect_mainqueue:
-            self.recoverbtn.Enable()
+        # if self.predisconnect_mainqueue:
+        #     self.recoverbtn.Enable()
 
     def store_predisconnect_state(self):
         self.predisconnect_mainqueue = self.p.mainqueue
@@ -1685,7 +1685,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.printbtn.SetLabel(_("Print"))
         self.pausebtn.SetLabel(_("Pause"))
         self.pausebtn.Disable()
-        self.recoverbtn.Disable()
+        # self.recoverbtn.Disable()
         if failed==False and self.p.online:
             self.printbtn.Enable()
         self.toolbarsizer.Layout()
