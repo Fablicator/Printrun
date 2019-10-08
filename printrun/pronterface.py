@@ -1317,7 +1317,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
         time.sleep(1)
-        if(self.recovery_info["copymode"]): self.p.send("M605 S2 X177") # Lock heads for copy mode
+        if(self.recovery_info["copymode"]): self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
         self.p.send("G28 X Y") # Home X and Y
         self.p.send("G0 E-20")
         time.sleep(10)
@@ -1959,6 +1959,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         
         if gline.raw.lstrip().startswith("M605"): # Check command first to avoid iterative check for every sent command
             if all(c in gline.raw for c in ["M605", "S2", "X"]):
+                for op in gline.raw.split():
+                    if op.startswith("X"):
+                        self.recovery_info["copydistance"] = op[1:]
                 self.recovery_info["copymode"] = True
             if all(c in gline.raw for c in ["M605", "S0"]): # Independent mode
                 self.recovery_info["copymode"] = False
