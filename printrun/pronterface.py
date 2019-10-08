@@ -1317,8 +1317,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
         time.sleep(1)
-        self.p.send("G28 X Y") # Home X and Y
         if(self.recovery_info["copymode"]): self.p.send("M605 S2 X177") # Lock heads for copy mode
+        self.p.send("G28 X Y") # Home X and Y
         self.p.send("G0 E-20")
         time.sleep(10)
         if("tool" in self.recovery_info): # Recover which head we were using
