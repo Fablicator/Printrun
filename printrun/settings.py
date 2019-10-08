@@ -269,31 +269,22 @@ class Settings:
         # the initial value determines the type
         self._add(StringSetting("port", "", _("Serial port"), _("Port used to communicate with printer")))
         self._add(ComboSetting("baudrate", 115200, self.__baudrate_list(), _("Baud rate"), _("Communications Speed")))
-        self._add(BooleanSetting("tcp_streaming_mode", False, _("TCP streaming mode"), _("When using a TCP connection to the printer, the streaming mode will not wait for acks from the printer to send new commands. This will break things such as ETA prediction, but can result in smoother prints.")), root.update_tcp_streaming_mode)
-        self._add(BooleanSetting("rpc_server", True, _("RPC server"), _("Enable RPC server to allow remotely querying print status")), root.update_rpc_server)
-        self._add(BooleanSetting("dtr", True, _("DTR"), _("Disabling DTR would prevent Arduino (RAMPS) from resetting upon connection"), "Printer"))
+        self._add(HiddenSetting("tcp_streaming_mode", False, _("TCP streaming mode"), _("When using a TCP connection to the printer, the streaming mode will not wait for acks from the printer to send new commands. This will break things such as ETA prediction, but can result in smoother prints.")), root.update_tcp_streaming_mode)
+        self._add(HiddenSetting("rpc_server", True, _("RPC server"), _("Enable RPC server to allow remotely querying print status")), root.update_rpc_server)
+        self._add(HiddenSetting("dtr", True, _("DTR"), _("Disabling DTR would prevent Arduino (RAMPS) from resetting upon connection"), "Printer"))
         self._add(SpinSetting("bedtemp_abs", 110, 0, 400, _("Bed temperature for ABS"), _("Heated Build Platform temp for ABS (deg C)"), "Printer"))
         self._add(SpinSetting("bedtemp_pla", 60, 0, 400, _("Bed temperature for PLA"), _("Heated Build Platform temp for PLA (deg C)"), "Printer"))
-        self._add(SpinSetting("temperature_abs", 230, 0, 400, _("Extruder temperature for ABS"), _("Extruder temp for ABS (deg C)"), "Printer"))
-        self._add(SpinSetting("temperature_pla", 185, 0, 400, _("Extruder temperature for PLA"), _("Extruder temp for PLA (deg C)"), "Printer"))
+        self._add(SpinSetting("temperature_abs", 240, 0, 400, _("Extruder temperature for ABS"), _("Extruder temp for ABS (deg C)"), "Printer"))
+        self._add(SpinSetting("temperature_pla", 215, 0, 400, _("Extruder temperature for PLA"), _("Extruder temp for PLA (deg C)"), "Printer"))
         self._add(SpinSetting("xy_feedrate", 3000, 0, 50000, _("X && Y manual feedrate"), _("Feedrate for Control Panel Moves in X and Y (mm/min)"), "Printer"))
         self._add(SpinSetting("z_feedrate", 100, 0, 50000, _("Z manual feedrate"), _("Feedrate for Control Panel Moves in Z (mm/min)"), "Printer"))
         self._add(SpinSetting("e_feedrate", 100, 0, 1000, _("E manual feedrate"), _("Feedrate for Control Panel Moves in Extrusions (mm/min)"), "Printer"))
-        defaultslicerpath=""
-        if sys.platform=="darwin" and getattr( sys, 'frozen', False ):
-            defaultslicerpath="/Applications/Slic3r.app/Contents/MacOS/"
-        if sys.platform=="win32" and getattr( sys, 'frozen', False ):
-            defaultslicerpath=".\\slic3r\\"
-        self._add(StringSetting("slicecommandpath", defaultslicerpath, _("Path to slicer"), _("Path to slicer"), "External"))
-        self._add(StringSetting("slicecommand", "slic3r $s --output $o", _("Slice command"), _("Slice command"), "External"))
-        if sys.platform=="win32":
-            self._add(StringSetting("slicecommand", "slic3r-console $s --output $o", _("Slice command"), _("Slice command"), "External"))
-        else:
-            self._add(StringSetting("slicecommand", "slic3r $s --output $o", _("Slice command"), _("Slice command"), "External"))
-        self._add(StringSetting("sliceoptscommand", "slic3r", _("Slicer options command"), _("Slice settings command"), "External"))
-        self._add(StringSetting("start_command", "", _("Start command"), _("Executable to run when the print is started"), "External"))
-        self._add(StringSetting("final_command", "", _("Final command"), _("Executable to run when the print is finished"), "External"))
-        self._add(StringSetting("error_command", "", _("Error command"), _("Executable to run when an error occurs"), "External"))
+        self._add(StringSetting("slicecommandpath", "", _("Path to slicer"), _("Path to slicer"), "External"))
+        self._add(StringSetting("slicecommand", "", _("Slice command"), _("Slice command"), "External"))
+        self._add(HiddenSetting("sliceoptscommand", "", _("Slicer options command"), _("Slice settings command"), "External"))
+        self._add(HiddenSetting("start_command", "", _("Start command"), _("Executable to run when the print is started"), "External"))
+        self._add(HiddenSetting("final_command", "", _("Final command"), _("Executable to run when the print is finished"), "External"))
+        self._add(HiddenSetting("error_command", "", _("Error command"), _("Executable to run when an error occurs"), "External"))
         self._add(StringSetting("log_path", "", _("Log path"), _("Path to the log file. An empty path will log to the console."), "UI"))
 
         self._add(HiddenSetting("project_offset_x", 0.0))
