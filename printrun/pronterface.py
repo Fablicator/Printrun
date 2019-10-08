@@ -1960,7 +1960,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if gline.raw.lstrip().startswith("M605"): # Check command first to avoid iterative check for every sent command
             if all(c in gline.raw for c in ["M605", "S2", "X"]):
                 self.recovery_info["copymode"] = True
-            if all(c in gline.raw for c in ["M605", "S0", "X"]): # Independent mode
+            if all(c in gline.raw for c in ["M605", "S0"]): # Independent mode
                 self.recovery_info["copymode"] = False
 
 
