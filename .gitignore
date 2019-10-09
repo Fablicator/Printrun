@@ -17,3 +17,4 @@ printrun/gcoder_line*.so
 installed_files
 Printrun.egg-info/
 *.spec
+fablicator.spec
