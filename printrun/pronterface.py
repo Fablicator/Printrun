@@ -26,6 +26,7 @@ import glob
 import logging
 import re
 import socket
+import shutil
 
 try: import simplejson as json
 except ImportError: import json
@@ -1311,18 +1312,28 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # print("DEBUG: CALLED getrecovergcodefile()")
         return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
     
-    def setrecovergcode(self, gcode):
+    def setrecovergcode(self, file):
         # print("DEBUG: CALLED setrecovergcode( gcode )")
-        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
-        rc_file.write(gcode)
-        rc_file.close()
+        # rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
+        # rc_file.write(gcode)
+        # rc_file.close()
+        
+        try:  
+            os.remove(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+        except:
+            pass
+
+        try:
+            shutil.copy2(file,os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+        except:
+            print("ERROR: Failure creating .recoverygcode!")
     
     def clearrecovery(self):
         # print("DEBUG: CALLED clearrecovery()")
         rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
         
-        os.remove(rc_info)
+            os.remove(rc_info)
         # os.remove(rc_gcode)
 
     def recover_prompt(self):
