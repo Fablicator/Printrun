@@ -154,10 +154,15 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.endScript = None #"end.gcode"
 
         self.recovery_info = {}
+        self.lastrcwrite = time.monotonic()
+        self.lastrclayer = 0 
         self.shouldrecover = False
         self.recovertemp = 0 # Number of times the temperature was correct
+
         self.RCBUFSIZE = 16 + 4 # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+        self.RCMINWAIT = 5 # Seconds between write
         
+
         self.filename = filename
 
         self.capture_skip = {}
@@ -1271,8 +1276,15 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        
         if not self.settings.powerrecover:
             return
+        
+        if (self.lastrcwrite < self.RCMINWAIT) or (self.lastrclayer != self.recovery_info["layer"]):
+            return
+
+        self.lastrcwrite = time.monotonic()
+        self.lastrclayer = self.recovery_info["layer"]
         def _recoverinfothread():
             try:
                 info = json.dumps(recoveryinfo)
