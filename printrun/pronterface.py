@@ -160,7 +160,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.shouldrecover = False
         self.recovertemp = 0 # Number of times the temperature was correct
 
-        self.RCBUFSIZE = 16 + 4 # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+        self.RCBUFSIZE = self.settings.fwgcodebufsize + self.settings.fwmovebufsize # Size of the movment planner buffer + BUFSIZE on Marlin firmware
         self.RCMINWAIT = 5 # Seconds between write
         
 
@@ -998,6 +998,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(StaticTextSetting("expspace", _(" "), _(" "), group = "Printer"))
         self.settings._add(StaticTextSetting("expbreak", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
         self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
+        self.settings._add(SpinSetting("fwgcodebufsize", 4, 0, 256, "Firmware command buffer size","Size of GCode buffer (BUFSIZE) in firmware","Printer"))
+        self.settings._add(SpinSetting("fwmovebufsize", 16, 0, 256, "Firmware motion planner size","Size of motion planner buffer (BLOCK_BUFFER_SIZE) in firmware","Printer"))
         self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True
