@@ -2100,6 +2100,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 setpoint = temps["B"][1]
                 if setpoint:
                     setpoint = float(setpoint)
+                    self.recovery_info["B"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetBedTargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.bedtgauge.SetTarget, setpoint)
         except:
