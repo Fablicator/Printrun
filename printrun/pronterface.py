@@ -1280,7 +1280,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if not self.settings.powerrecover:
             return
         
-        if (self.lastrcwrite < self.RCMINWAIT) or (self.lastrclayer != self.recovery_info["layer"]):
+        if (self.lastrcwrite < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
             return
 
         self.lastrcwrite = time.monotonic()
