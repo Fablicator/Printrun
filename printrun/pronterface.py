@@ -1672,6 +1672,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.slice(name)
             else:
                 self.load_gcode_async(name)
+                self.setrecovergcode(name)
         else:
             dlg.Destroy()
 
