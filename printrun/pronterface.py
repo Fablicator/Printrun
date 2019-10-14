@@ -1360,7 +1360,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             return
 
         self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
-        if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        if "copymode" in self.recovery_info: 
+            if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        
         if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
         self.p.send("M140 S%f" % self.recovery_info["B"])
         time.sleep(1)
@@ -1371,7 +1373,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
         time.sleep(1)
-        if(self.recovery_info["copymode"]): self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        if "copymode" in self.recovery_info: 
+            if self.recovery_info["copymode"]: self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        
         self.p.send("G28 X Y") # Home X and Y
         self.p.send("G0 E-20")
         time.sleep(10)
