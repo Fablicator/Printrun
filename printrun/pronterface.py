@@ -1333,7 +1333,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
         
+        try:
             os.remove(rc_info)
+        except:
+            print("ERROR: Problem removing recovery file!")
         # os.remove(rc_gcode)
 
     def recover_prompt(self):
