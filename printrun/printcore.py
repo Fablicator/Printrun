@@ -458,13 +458,14 @@ class printcore():
         # might be calling it from the thread itself
         try:
             self.print_thread.join()
-        except RuntimeError as e:
-            if e.message == "cannot join current thread":
-                pass
-            else:
-                self.logError(traceback.format_exc())
+        # except RuntimeError as e:
+        #     if e.message == "cannot join current thread":
+        #         pass
+        #     else:
+        #         self.logError(traceback.format_exc())
         except:
-            self.logError(traceback.format_exc())
+            pass
+        #     self.logError(traceback.format_exc())
 
         self.print_thread = None
 
@@ -563,8 +564,8 @@ class printcore():
     def process_host_command(self, command):
         """only ;@pause command is implemented as a host command in printcore, but hosts are free to reimplement this method"""
         command = command.lstrip()
-        if command.startswith(";@pause"):
-            self.pause()
+        # if command.startswith(";@pause"):
+        #     self.pause()
 
     def _sendnext(self):
         if not self.printer:

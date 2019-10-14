@@ -1487,6 +1487,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.uploading = False
 
     def pause(self, event = None):
+        # print("DEBUG: PAUSE COMMAND STARTED IN pronterface.py")
         if not self.paused:
             self.log(_("Print paused at: %s") % format_time(time.time()))
             if self.settings.display_progress_on_printer:
@@ -1516,6 +1517,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.p.resume()
             wx.CallAfter(self.pausebtn.SetLabel, _("Pause"))
             wx.CallAfter(self.toolbarsizer.Layout)
+
+        # print("DEBUG: PAUSE COMMAND FINISHED IN pronterface.py")
 
     def recover(self, event):
         self.extra_print_time = 0
