@@ -97,7 +97,7 @@ class GcodePlaterPanel(PlaterPanel):
                              get_home_pos(self.build_dimensions))
         model = actors.GcodeModel()
         if gcode.filament_length > 0:
-            model.display_travels = False
+            model.display_travels = True
         generator = model.load_data(gcode)
         generator_output = next(generator)
         while generator_output is not None:
