@@ -457,7 +457,7 @@ class GcodeViewFrame(GvizBaseFrame, GcodeViewLoader):
         filtered = [k for k, v in self.model.layer_idxs_map.items() if v == layer]
         if filtered:
             true_layer = filtered[0]
-            z = self.model.gcode.all_layers[true_layer].z
+            z = self.model.gcode.all_layers[true_layer].z if self.model.gcode.all_layers[true_layer].z else 0 
             message = _("Layer %d -%s Z = %.03f mm") % (layer, extra, z)
         else:
             message = _("Entire object")
