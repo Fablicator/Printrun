@@ -1000,6 +1000,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
         self.settings._add(SpinSetting("fwgcodebufsize", 4, 0, 256, "Firmware command buffer size","Size of GCode buffer (BUFSIZE) in firmware","Printer"))
         self.settings._add(SpinSetting("fwmovebufsize", 16, 0, 256, "Firmware motion planner size","Size of motion planner buffer (BLOCK_BUFFER_SIZE) in firmware","Printer"))
+        self.settings._add(StringSetting("pausecommand", ";@pause", _("Pause command"), _("Command to inject to pause a print"), "Printer"))
         self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True

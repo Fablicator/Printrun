@@ -212,8 +212,9 @@ class Gviz(wx.Panel):
         injector(self.gcode, self.layerindex, layer)
 
     def inject_pause(self):
-        layer = self.layers[self.layerindex]
-        inject_direct(self.gcode, self.layerindex, layer, [";@pause"])
+        # layer = self.layers[self.layerindex]
+        # inject_direct(self.gcode, self.layerindex, layer, [;@pause])
+        pass
 
     def editlayer(self):
         layer = self.layers[self.layerindex]

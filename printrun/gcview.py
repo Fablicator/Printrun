@@ -104,7 +104,8 @@ class GcodeViewPanel(wxGLPanel):
         l = self.parent.model.num_layers_to_draw
         filtered = [k for k, v in self.parent.model.layer_idxs_map.items() if v == l]
         if filtered:
-            inject_direct(self.parent.model.gcode, l, filtered[0], [";@pause"])
+            inject_direct(self.parent.model.gcode, l, filtered[0], [self.parent.root.settings.pausecommand]) # self.parent.root -> Pronterwindow
+            # print(self.parent.root.settings.pausecommand)
         else:
             logging.error(_("Invalid layer for injection"))
     
