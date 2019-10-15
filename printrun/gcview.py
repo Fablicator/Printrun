@@ -23,6 +23,7 @@ from .gl.panel import wxGLPanel
 from .gl.trackball import build_rotmatrix
 from .gl.libtatlin import actors
 from .injectgcode import injector, injector_edit
+from .injectgcode import inject as inject_direct
 
 from pyglet.gl import glPushMatrix, glPopMatrix, \
     glTranslatef, glRotatef, glScalef, glMultMatrixd, \
@@ -97,6 +98,16 @@ class GcodeViewPanel(wxGLPanel):
         else:
             logging.error(_("Invalid layer for injection"))
 
+    def inject_pause(self):
+        # layer = self.layers[self.layerindex]
+        # inject_direct(self.gcode, self.layerindex, layer, ";@pause")
+        l = self.parent.model.num_layers_to_draw
+        filtered = [k for k, v in self.parent.model.layer_idxs_map.items() if v == l]
+        if filtered:
+            inject_direct(self.parent.model.gcode, l, filtered[0], [";@pause"])
+        else:
+            logging.error(_("Invalid layer for injection"))
+    
     def editlayer(self):
         l = self.parent.model.num_layers_to_draw
         filtered = [k for k, v in self.parent.model.layer_idxs_map.items() if v == l]
@@ -434,6 +445,7 @@ class GcodeViewFrame(GvizBaseFrame, GcodeViewLoader):
         self.Bind(wx.EVT_TOOL, lambda x: self.glpanel.fit(), id = 8)
         self.Bind(wx.EVT_TOOL, lambda x: self.glpanel.inject(), id = 6)
         self.Bind(wx.EVT_TOOL, lambda x: self.glpanel.editlayer(), id = 7)
+        self.Bind(wx.EVT_TOOL, lambda x: self.glpanel.inject_pause(), id = 9)
 
     def setlayercb(self, layer):
         self.layerslider.SetValue(layer)
