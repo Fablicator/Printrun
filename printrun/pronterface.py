@@ -26,6 +26,7 @@ import glob
 import logging
 import re
 import socket
+import shutil
 
 try: import simplejson as json
 except ImportError: import json
@@ -154,10 +155,15 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.endScript = None #"end.gcode"
 
         self.recovery_info = {}
+        self.lastrcwrite = time.clock()
+        self.lastrclayer = 0 
         self.shouldrecover = False
         self.recovertemp = 0 # Number of times the temperature was correct
-        self.RCBUFSIZE = 16 + 4 # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+
+        self.RCBUFSIZE = self.settings.fwgcodebufsize + self.settings.fwmovebufsize # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+        self.RCMINWAIT = 5 # Seconds between write
         
+
         self.filename = filename
 
         self.capture_skip = {}
@@ -992,6 +998,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(StaticTextSetting("expspace", _(" "), _(" "), group = "Printer"))
         self.settings._add(StaticTextSetting("expbreak", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
         self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
+        self.settings._add(SpinSetting("fwgcodebufsize", 4, 0, 256, "Firmware command buffer size","Size of GCode buffer (BUFSIZE) in firmware","Printer"))
+        self.settings._add(SpinSetting("fwmovebufsize", 16, 0, 256, "Firmware motion planner size","Size of motion planner buffer (BLOCK_BUFFER_SIZE) in firmware","Printer"))
+        self.settings._add(StringSetting("pausecommand", ";@pause", _("Pause command"), _("Command to inject to pause a print"), "Printer"))
         self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True
@@ -1271,8 +1280,21 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
     
     def setrecoverinfo(self, recoveryinfo):
         # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        
         if not self.settings.powerrecover:
             return
+        
+        if ((time.clock() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
+            return
+
+        # DEBUG
+        # if ((time.clock() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer != self.recovery_info["layer"]):
+        #     print("DEBUG: PROGRESS BACKED UP ON LAYER CHANGE")
+        # if ((time.clock() - self.lastrcwrite) > self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
+        #     print("DEBUG: PROGRESS BACKED UP ON CLOCK")
+
+        self.lastrcwrite = time.clock()
+        self.lastrclayer = self.recovery_info["layer"]
         def _recoverinfothread():
             try:
                 info = json.dumps(recoveryinfo)
@@ -1293,18 +1315,31 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # print("DEBUG: CALLED getrecovergcodefile()")
         return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
     
-    def setrecovergcode(self, gcode):
+    def setrecovergcode(self, file):
         # print("DEBUG: CALLED setrecovergcode( gcode )")
-        rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
-        rc_file.write(gcode)
-        rc_file.close()
+        # rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
+        # rc_file.write(gcode)
+        # rc_file.close()
+        
+        try:  
+            os.remove(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+        except:
+            pass
+
+        try:
+            shutil.copy2(file,os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+        except:
+            print("ERROR: Failure creating .recoverygcode!")
     
     def clearrecovery(self):
         # print("DEBUG: CALLED clearrecovery()")
         rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
         # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
         
-        os.remove(rc_info)
+        try:
+            os.remove(rc_info)
+        except:
+            print("ERROR: Problem removing recovery file!")
         # os.remove(rc_gcode)
 
     def recover_prompt(self):
@@ -1326,7 +1361,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
             return
 
         self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
-        if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        if "copymode" in self.recovery_info: 
+            if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        
         if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
         self.p.send("M140 S%f" % self.recovery_info["B"])
         time.sleep(1)
@@ -1337,7 +1374,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
         self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
         time.sleep(1)
-        if(self.recovery_info["copymode"]): self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        if "copymode" in self.recovery_info: 
+            if self.recovery_info["copymode"]: self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        
         self.p.send("G28 X Y") # Home X and Y
         self.p.send("G0 E-20")
         time.sleep(10)
@@ -1449,6 +1488,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.uploading = False
 
     def pause(self, event = None):
+        # print("DEBUG: PAUSE COMMAND STARTED IN pronterface.py")
         if not self.paused:
             self.log(_("Print paused at: %s") % format_time(time.time()))
             if self.settings.display_progress_on_printer:
@@ -1478,6 +1518,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.p.resume()
             wx.CallAfter(self.pausebtn.SetLabel, _("Pause"))
             wx.CallAfter(self.toolbarsizer.Layout)
+
+        # print("DEBUG: PAUSE COMMAND FINISHED IN pronterface.py")
 
     def recover(self, event):
         self.extra_print_time = 0
@@ -1640,6 +1682,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.slice(name)
             else:
                 self.load_gcode_async(name)
+                self.setrecovergcode(name)
         else:
             dlg.Destroy()
 
@@ -2058,6 +2101,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 setpoint = temps["B"][1]
                 if setpoint:
                     setpoint = float(setpoint)
+                    self.recovery_info["B"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetBedTargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.bedtgauge.SetTarget, setpoint)
         except:

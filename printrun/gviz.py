@@ -20,6 +20,7 @@ import wx
 import time
 from . import gcoder
 from .injectgcode import injector, injector_edit
+from .injectgcode import inject as inject_direct
 
 from .utils import imagefile, install_locale, get_home_pos
 install_locale('pronterface')
@@ -47,7 +48,8 @@ class GvizBaseFrame(wx.Frame):
         self.toolbar.AddSeparator()
         self.toolbar.AddTool(6, '', wx.Bitmap(imagefile('inject.png'), wx.BITMAP_TYPE_PNG), wx.NullBitmap, shortHelp = _("Inject G-Code"), longHelp = _("Insert code at the beginning of this layer"))
         self.toolbar.AddTool(7, '', wx.Bitmap(imagefile('edit.png'), wx.BITMAP_TYPE_PNG), wx.NullBitmap, shortHelp = _("Edit layer"), longHelp = _("Edit the G-Code of this layer"))
-
+        self.toolbar.AddTool(9, '', wx.Bitmap(imagefile('add_pause.png'), wx.BITMAP_TYPE_PNG), wx.NullBitmap, shortHelp = _("Add pause here"), longHelp = _("Add a host pause at the current layer"))
+        
         vbox.Add(self.toolbar, 0, border = 5)
 
         panel.SetSizer(vbox)
@@ -87,6 +89,7 @@ class GvizWindow(GvizBaseFrame):
         self.Bind(wx.EVT_TOOL, self.resetview, id = 5)
         self.Bind(wx.EVT_TOOL, lambda x: self.p.inject(), id = 6)
         self.Bind(wx.EVT_TOOL, lambda x: self.p.editlayer(), id = 7)
+        self.Bind(wx.EVT_TOOL, lambda x: self.p.inject_pause(), id = 9)
 
         self.initpos = None
         self.p.Bind(wx.EVT_KEY_DOWN, self.key)
@@ -207,6 +210,11 @@ class Gviz(wx.Panel):
     def inject(self):
         layer = self.layers[self.layerindex]
         injector(self.gcode, self.layerindex, layer)
+
+    def inject_pause(self):
+        # layer = self.layers[self.layerindex]
+        # inject_direct(self.gcode, self.layerindex, layer, [;@pause])
+        pass
 
     def editlayer(self):
         layer = self.layers[self.layerindex]
