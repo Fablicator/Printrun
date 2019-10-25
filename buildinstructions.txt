@@ -88,7 +88,7 @@ for running:
 python fablicator.py
 
 for packaging:
-pip install pyinstaller
+pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
 pip install pypiwin32
 
 Stable versions
