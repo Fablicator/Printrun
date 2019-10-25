@@ -80,7 +80,7 @@ pip install --upgrade setuptools
 pip install cffi
 pip install -r requirements.txt
 pip install cython
- 
+pip install -U --pre -f https://wxpython.org/Phoenix/snapshot-builds/ wxPython
 python setup.py build_ext --inplace
 
 for running:
