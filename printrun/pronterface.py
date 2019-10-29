@@ -155,7 +155,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.endScript = None #"end.gcode"
 
         self.recovery_info = {}
-        self.lastrcwrite = time.clock()
+        self.lastrcwrite = time.perf_counter()
         self.lastrclayer = 0 
         self.shouldrecover = False
         self.recovertemp = 0 # Number of times the temperature was correct
@@ -1284,16 +1284,16 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if not self.settings.powerrecover:
             return
         
-        if ((time.clock() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
+        if ((time.perf_counter() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
             return
 
         # DEBUG
-        # if ((time.clock() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer != self.recovery_info["layer"]):
+        # if ((time.perf_counter() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer != self.recovery_info["layer"]):
         #     print("DEBUG: PROGRESS BACKED UP ON LAYER CHANGE")
-        # if ((time.clock() - self.lastrcwrite) > self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
-        #     print("DEBUG: PROGRESS BACKED UP ON CLOCK")
+        # if ((time.perf_counter() - self.lastrcwrite) > self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
+        #     print("DEBUG: PROGRESS BACKED UP ON perf_counter")
 
-        self.lastrcwrite = time.clock()
+        self.lastrcwrite = time.perf_counter()
         self.lastrclayer = self.recovery_info["layer"]
         def _recoverinfothread():
             try:
