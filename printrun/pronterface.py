@@ -195,11 +195,17 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # -- Okai, it seems it breaks things like update_gviz_params ><
         os.putenv("UBUNTU_MENUPROXY", "0")
         size = (self.settings.last_window_width, self.settings.last_window_height)
-        MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
+
+        # UNCOMMENT FOR RELEASE
+        # MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
+        # self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
+
+        #UNCOMMENT FOR DEV
+        MainWindow.__init__(self, None, title = _("Fablicator Interface DEV"), size = size)
+        self.SetIcon(wx.Icon(iconfile("fablicatordev_logo.png"), wx.BITMAP_TYPE_PNG))
+
         if self.settings.last_window_maximized:
             self.Maximize()
-        
-        self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
         self.Bind(wx.EVT_SIZE, self.on_resize)
         self.Bind(wx.EVT_MAXIMIZE, self.on_maximize)
         self.window_ready = True
