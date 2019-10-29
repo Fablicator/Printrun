@@ -1889,6 +1889,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         pronsole.pronsole.endcb(self)
         if self.p.queueindex == 0:
             
+            if self.settings.powerrecover:
+                self.clearrecovery()
+
             if self.shutdownpostprint:
                 os.system("shutdown /s /t 1")
 
