@@ -1424,8 +1424,8 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
         # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
         self.p.send("M412 R")
-        time.sleep(10)
         self.p.send("M75")
+        time.sleep(10)
         self.p.startprint(self.fgcode, restart_index)
         self.on_startprint()
         self.shouldrecover = False
