@@ -1425,6 +1425,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
         self.p.send("M412 R")
         time.sleep(10)
+        self.p.send("M75")
         self.p.startprint(self.fgcode, restart_index)
         self.on_startprint()
         self.shouldrecover = False
