@@ -197,12 +197,12 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         size = (self.settings.last_window_width, self.settings.last_window_height)
 
         # UNCOMMENT FOR RELEASE
-        # MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
-        # self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
+        MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
+        self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
 
-        #UNCOMMENT FOR DEV
-        MainWindow.__init__(self, None, title = _("Fablicator Interface DEV"), size = size)
-        self.SetIcon(wx.Icon(iconfile("fablicatordev_logo.png"), wx.BITMAP_TYPE_PNG))
+        # UNCOMMENT FOR DEV
+        # MainWindow.__init__(self, None, title = _("Fablicator Interface DEV"), size = size)
+        # self.SetIcon(wx.Icon(iconfile("fablicatordev_logo.png"), wx.BITMAP_TYPE_PNG))
 
         if self.settings.last_window_maximized:
             self.Maximize()
@@ -917,7 +917,10 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         info.SetName('Fablicator Interface')
         # info.SetVersion(printcore.__version__)
 
-        description = """This software is a modified version of Printrun, a pure python CNC interface."""
+        description = """This software is a modified version of Printrun, a pure python CNC interface.
+        
+        COMPILED ON 01/03/2020
+        """
 
         description += "\n\n" + \
                        _("%.02fmm of filament have been extruded during prints") \
