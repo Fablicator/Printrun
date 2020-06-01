@@ -65,10 +65,10 @@ cp -R dist/ ~/FablicatorSoftware/FablicatorInterface/
 cp fablicator.desktop ~/.local/share/applications/
 ---------------------------------------------------------------------------------
 
-setup on windows: MUST BE DONE AFTER PULLING FROM REPOSITORY
+setup on windows:
 (install python 3.6)
 (install python extension compile environment, see https://wiki.python.org/moin/WindowsCompilers )
-^ ALSO INSTALL UNIVERSAL BUILD TOOLS
+    --> Install MSVC and Windows SDK
 (install git)
 git clone http://github.com/kliment/Printrun.git
 cd Printrun
@@ -80,8 +80,6 @@ pip install --upgrade setuptools
 pip install cffi
 pip install -r requirements.txt
 pip install cython
-pip install -U --pre -f https://wxpython.org/Phoenix/snapshot-builds/ wxPython
-pip install .\wheels\lxml-4.4.1-cp38-cp38-win32.whl
 python setup.py build_ext --inplace
 
 for running:
