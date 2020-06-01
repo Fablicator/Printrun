@@ -1,8 +1,8 @@
 # python (>= 3.6)
 pyserial >= 2.7
 pathlib2
-wxPython (== 4.1.0) #; sys_platform != 'linux'
-numpy (== 1.18.4)
+wxPython
+numpy
 pyglet (>= 1.1)
 cffi
 cairocffi
