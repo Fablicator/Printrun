@@ -17,6 +17,8 @@ from xmlrpc.server import SimpleXMLRPCServer
 from threading import Thread
 import socket
 import logging
+import os
+from appdirs import user_cache_dir
 
 from .utils import install_locale, parse_temperature_report
 install_locale('pronterface')
@@ -30,11 +32,15 @@ class ProntRPC:
     def __init__(self, pronsole, port = RPC_PORT):
         self.pronsole = pronsole
         used_port = port
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rpclock_file = os.path.join(cache_dir,"rpclock")
         while True:
             try:
                 self.server = SimpleXMLRPCServer(("localhost", used_port),
                                                  allow_none = True,
                                                  logRequests = False)
+                
+                open(rpclock_file,"w").write(str(used_port))
                 if used_port != port:
                     logging.warning(_("RPC server bound on non-default port %d") % used_port)
                 break

@@ -27,6 +27,7 @@ import logging
 import re
 import socket
 import shutil
+from appdirs import user_cache_dir
 
 try: import simplejson as json
 except ImportError: import json
@@ -368,6 +369,14 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.Close()
 
     def closewin(self, e):
+        try:
+            print("Removing rpclock")
+            cache_dir = os.path.join(user_cache_dir("Printrun"))
+            rpclock_file = os.path.join(cache_dir,"rpclock")
+            os.remove(rpclock_file)
+        except:
+            pass
+
         e.StopPropagation()
         self.do_exit("force")
 
@@ -1271,12 +1280,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         # print("DEBUG: CALLED canrecover()")
         if not self.settings.powerrecover:
             return False
-        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_filepath = os.path.join(cache_dir,"recoveryinfo")
         return os.path.exists(rc_filepath)
 
     def getrecoverinfo(self):
         # print("DEBUG: CALLED getrecoverinfo()")
-        rc_filepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_filepath = os.path.join(cache_dir,"recoveryinfo")
         if not os.path.exists(rc_filepath): 
             return None
         rc_file = open(rc_filepath, "r")
@@ -1293,19 +1304,14 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         if ((time.perf_counter() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
             return
 
-        # DEBUG
-        # if ((time.perf_counter() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer != self.recovery_info["layer"]):
-        #     print("DEBUG: PROGRESS BACKED UP ON LAYER CHANGE")
-        # if ((time.perf_counter() - self.lastrcwrite) > self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
-        #     print("DEBUG: PROGRESS BACKED UP ON perf_counter")
-
         self.lastrcwrite = time.perf_counter()
         self.lastrclayer = self.recovery_info["layer"]
         def _recoverinfothread():
             try:
                 info = json.dumps(recoveryinfo)
-                rcfilepath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
-                rctmppath = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo_tmp")
+                cache_dir = os.path.join(user_cache_dir("Printrun"))
+                rc_filepath = os.path.join(cache_dir,"recoveryinfo")
+                rctmppath = os.path.join(cache_dir,"recoveryinfo_tmp")
                 rc_file = open(rctmppath, "w")
                 rc_file.write(info)
                 rc_file.flush()
@@ -1319,34 +1325,31 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def getrecovergcodefile(self):
         # print("DEBUG: CALLED getrecovergcodefile()")
-        return os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        return os.path.join(cache_dir,"recoverygcode")
     
-    def setrecovergcode(self, file):
+    def setrecovergcode(self, file_path):
         # print("DEBUG: CALLED setrecovergcode( gcode )")
-        # rc_file = open(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"), "w")
-        # rc_file.write(gcode)
-        # rc_file.close()
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
         
         try:  
-            os.remove(os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+            os.remove(os.path.join(cache_dir,"recoverygcode"))
         except:
             pass
 
         try:
-            shutil.copy2(file,os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode"))
+            shutil.copy2(file_path,os.path.join(cache_dir,"recoverygcode"))
         except:
-            print("ERROR: Failure creating .recoverygcode!")
+            print("ERROR: Failure creating recoverygcode!")
     
     def clearrecovery(self):
         # print("DEBUG: CALLED clearrecovery()")
-        rc_info = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoveryinfo")
-        # rc_gcode = os.path.join(wx.StandardPaths.Get().GetLocalDataDir(),".recoverygcode")
-        
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_info = os.path.join(cache_dir,"recoveryinfo")
         try:
             os.remove(rc_info)
         except:
             print("ERROR: Problem removing recovery file!")
-        # os.remove(rc_gcode)
 
     def recover_prompt(self):
         # print("DEBUG: CALLED recover_prompt()")
@@ -2164,14 +2167,6 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         return False
 
     def recvcb(self, l):
-
-        # if self.p.printing and not self.shouldrecover:
-        #     self.recovery_info["layer"] = self.curlayer
-
-        #     if self.fgcode.lines[self.p.queueindex].is_move:
-        #         self.recovery_info["queueindex"] = self.p.queueindex
-        #     self.setrecoverinfo(self.recovery_info)
-
         l = l.rstrip()
         if not self.recvcb_actions(l):
             report_type = self.recvcb_report(l)
@@ -2684,32 +2679,6 @@ class PronterApp(wx.App):
 
     mainwindow = None
     def __init__(self, *args, **kwargs):
-        
-        # Single instance checking
-        self.name = "Fablicator-%s" % wx.GetUserId()
-        self.instance = wx.SingleInstanceChecker(self.name)
-        
-        # Create a socket server to handle opening of files in other instances
-        self.BINDIP = 'localhost'
-        self.BINDPORT = 13008
-        self.tcp = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            self.tcp.bind((self.BINDIP, self.BINDPORT))
-            self.tcp.listen(1) ## Only allow 1 connection
-        except:
-            self.tcp.connect((self.BINDIP, self.BINDPORT))
-            self.tcp.send(bytes(' '.join(sys.argv[1:]), 'utf-8'))
-            sys.exit(2)
-        
-        self.inst_daemon = threading.Thread(
-            target=self.instance_daemon,
-            daemon=True
-        )
-        self.inst_daemon.start()
-
-        # if self.instance.IsAnotherRunning():
-        #     sys.exit(2)
-        #     return False
         # Must be done before the app opens
         # Try moving this ot OnInit
         super(PronterApp, self).__init__(*args, **kwargs)

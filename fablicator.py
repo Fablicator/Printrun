@@ -18,6 +18,9 @@
 import os
 import sys
 import getopt
+import xmlrpc.client
+from xmlrpc.client import ServerProxy, Error
+from appdirs import user_cache_dir
 
 try:
     import wx  # NOQA
@@ -58,10 +61,29 @@ if __name__ == '__main__':
         elif o in ('-h', '--help'):
             print(usage)
             sys.exit(0)
+    
+    # Single instance
+    cache_dir = os.path.join(user_cache_dir("Printrun"))
+    print(cache_dir)
+    rpclock_file = os.path.join(cache_dir,"rpclock")
+    if os.path.exists(rpclock_file):
+        rpc_port = open(rpclock_file).read()
+        rpc_url = "http://localhost:"+ rpc_port
+        with ServerProxy(rpc_url) as proxy:
+            try:
+                gcode_file = sys.argv[1] if len(sys.argv) > 1 else ""
+                proxy.load_file(gcode_file)
+                sys.exit(0)
+            except Error:
+                pass
+            except ConnectionRefusedError:
+                pass
 
     app = PronterApp(False)
     try:
         app.MainLoop()
     except KeyboardInterrupt:
         pass
+    print("REMOVING LOCK")
+    os.remove(rpclock_file)
     del app
