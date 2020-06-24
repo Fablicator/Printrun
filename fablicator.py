@@ -64,7 +64,7 @@ if __name__ == '__main__':
     
     # Single instance
     cache_dir = os.path.join(user_cache_dir("Printrun"))
-    print(cache_dir)
+    # print(cache_dir)
     rpclock_file = os.path.join(cache_dir,"rpclock")
     if os.path.exists(rpclock_file):
         rpc_port = open(rpclock_file).read()
