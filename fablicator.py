@@ -22,6 +22,7 @@ import xmlrpc.client
 from xmlrpc.client import ServerProxy, Error
 from appdirs import user_cache_dir
 import socket
+import time
 
 try:
     import wx  # NOQA
@@ -64,9 +65,15 @@ if __name__ == '__main__':
             sys.exit(0)
     
     # Single instance
+    
     cache_dir = os.path.join(user_cache_dir("Printrun"))
     rpclock_file = os.path.join(cache_dir,"rpclock")
-
+    rpcwait_file = os.path.join(cache_dir,"rpcwait")
+    rpcwait_timeout = 10
+    while(os.path.exists(rpcwait_file) and rpcwait_timeout>0):
+        time.sleep(1)
+        rpcwait_timeout = rpcwait_timeout - 1
+    
     if os.path.exists(rpclock_file): # Check if the lock file is available
         print("rpclock found")
         rpc_port = open(rpclock_file).read()
@@ -79,6 +86,8 @@ if __name__ == '__main__':
                     proxy.load_file(gcode_file)
             sys.exit(0)
 
+    # Tell other instances to wait for the first instance
+    open(rpcwait_file,"w").write("")
     app = PronterApp(False)
     try:
         app.MainLoop()

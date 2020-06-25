@@ -34,6 +34,7 @@ class ProntRPC:
         used_port = port
         cache_dir = os.path.join(user_cache_dir("Printrun"))
         rpclock_file = os.path.join(cache_dir,"rpclock")
+        rpcwait_file = os.path.join(cache_dir,"rpcwait")
         addr = "" if pronsole.settings.expose_rpc else "localhost"
         # print("RPCSERVER -> " + addr)
         while True:
@@ -43,6 +44,7 @@ class ProntRPC:
                                                  logRequests = False)
                 
                 open(rpclock_file,"w").write(str(used_port))
+                os.remove(rpcwait_file)
                 if used_port != port:
                     logging.warning(_("RPC server bound on non-default port %d") % used_port)
                 break
