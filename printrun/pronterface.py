@@ -149,6 +149,16 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         self.pauseScript = None #"pause.gcode"
         self.endScript = None #"end.gcode"
 
+        self.recovery_info = {}
+        self.lastrcwrite = time.perf_counter()
+        self.lastrclayer = 0 
+        self.shouldrecover = False
+        self.recovertemp = 0 # Number of times the temperature was correct
+
+        self.RCBUFSIZE = self.settings.fwgcodebufsize + self.settings.fwmovebufsize # Size of the movment planner buffer + BUFSIZE on Marlin firmware
+        self.RCMINWAIT = 5 # Seconds between write
+        
+
         self.filename = filename
 
         self.capture_skip = {}
@@ -188,12 +198,12 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         size = (self.settings.last_window_width, self.settings.last_window_height)
 
         # UNCOMMENT FOR RELEASE
-        MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
-        self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
+        # MainWindow.__init__(self, None, title = _("Fablicator Interface"), size = size)
+        # self.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
 
         #UNCOMMENT FOR DEV
-        # MainWindow.__init__(self, None, title = _("Fablicator Interface DEV"), size = size)
-        # self.SetIcon(wx.Icon(iconfile("fablicatordev_logo.png"), wx.BITMAP_TYPE_PNG))
+        MainWindow.__init__(self, None, title = _("Fablicator Interface DEV"), size = size)
+        self.SetIcon(wx.Icon(iconfile("fablicatordev_logo.png"), wx.BITMAP_TYPE_PNG))
 
         if self.settings.last_window_maximized:
             self.Maximize()
@@ -1003,8 +1013,13 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(ColorSetting("gcview_color_current_printed", "#196600CC", _("3D view printed current layer moves color"), _("Color of already printed moves from current layer in 3D view"), "Colors"), self.update_gcview_colors)
         self.settings._add(StaticTextSetting("note1", _("Note:"), _("Changing some of these settings might require a restart to get effect"), group = "UI"))
         self.settings._add(StaticTextSetting("expspace", _(" "), _(" "), group = "Printer"))
-        # self.settings._add(BooleanSetting("expose_rpc", False, _("Expose XMLRPC server"), _("Expose XMLRPC server to the local network (Requires interface restart)"), "Printer"))
+        self.settings._add(StaticTextSetting("expbreak", _(" "), _("---------------------------[[EXPERIMENTAL FEATURES]]---------------------------"), group = "Printer"))
+        self.settings._add(BooleanSetting("expose_rpc", False, _("Expose XMLRPC server"), _("Expose XMLRPC server to the local network (Requires interface restart)"), "Printer"))
+        self.settings._add(BooleanSetting("powerrecover", False, _("Enable power loss recovery"), _("Printer can recover a print from power loss"), "Printer"))
+        self.settings._add(SpinSetting("fwgcodebufsize", 4, 0, 256, "Firmware command buffer size","Size of GCode buffer (BUFSIZE) in firmware","Printer"))
+        self.settings._add(SpinSetting("fwmovebufsize", 16, 0, 256, "Firmware motion planner size","Size of motion planner buffer (BLOCK_BUFFER_SIZE) in firmware","Printer"))
         self.settings._add(StringSetting("pausecommand", ";@pause", _("Pause command"), _("Command to inject to pause a print"), "Printer"))
+        self.settings._add(StaticTextSetting("expbreakbot", _(" "), _("-------------------------------------------------------------------------------------"), group = "Printer"))
         recentfilessetting = StringSetting("recentfiles", "[]")
         recentfilessetting.hidden = True
         self.settings._add(recentfilessetting, self.update_recent_files)
@@ -1262,6 +1277,167 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.paused = 0
             wx.CallAfter(self.toolbarsizer.Layout)
         dlg.Destroy()
+
+    #  --------------------------------------------------------------
+    #  Shutdown recovery handling
+    #  --------------------------------------------------------------
+
+    def canrecover(self):
+        # print("DEBUG: CALLED canrecover()")
+        if not self.settings.powerrecover:
+            return False
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_filepath = os.path.join(cache_dir,"recoveryinfo")
+        return os.path.exists(rc_filepath)
+
+    def getrecoverinfo(self):
+        # print("DEBUG: CALLED getrecoverinfo()")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_filepath = os.path.join(cache_dir,"recoveryinfo")
+        if not os.path.exists(rc_filepath): 
+            return None
+        rc_file = open(rc_filepath, "r")
+        info = json.loads(rc_file.read())
+        rc_file.close()
+        return info
+    
+    def setrecoverinfo(self, recoveryinfo):
+        # print("DEBUG: CALLED setrecoverinfo(" + str(recoveryinfo) + ")")
+        
+        if not self.settings.powerrecover:
+            return
+        
+        if ((time.perf_counter() - self.lastrcwrite) < self.RCMINWAIT) and (self.lastrclayer == self.recovery_info["layer"]):
+            return
+
+        self.lastrcwrite = time.perf_counter()
+        self.lastrclayer = self.recovery_info["layer"]
+        def _recoverinfothread():
+            try:
+                info = json.dumps(recoveryinfo)
+                cache_dir = os.path.join(user_cache_dir("Printrun"))
+                rc_filepath = os.path.join(cache_dir,"recoveryinfo")
+                rctmppath = os.path.join(cache_dir,"recoveryinfo_tmp")
+                rc_file = open(rctmppath, "w")
+                rc_file.write(info)
+                rc_file.flush()
+                os.fsync(rc_file.fileno())
+                rc_file.close()
+                os.replace(rctmppath, rcfilepath)
+            except:
+                pass
+        
+        threading.Thread(target = _recoverinfothread).start()
+
+    def getrecovergcodefile(self):
+        # print("DEBUG: CALLED getrecovergcodefile()")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        return os.path.join(cache_dir,"recoverygcode")
+    
+    def setrecovergcode(self, file_path):
+        # print("DEBUG: CALLED setrecovergcode( gcode )")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        
+        try:  
+            os.remove(os.path.join(cache_dir,"recoverygcode"))
+        except:
+            pass
+
+        try:
+            shutil.copy2(file_path,os.path.join(cache_dir,"recoverygcode"))
+        except:
+            print("ERROR: Failure creating recoverygcode!")
+    
+    def clearrecovery(self):
+        # print("DEBUG: CALLED clearrecovery()")
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rc_info = os.path.join(cache_dir,"recoveryinfo")
+        try:
+            os.remove(rc_info)
+        except:
+            print("ERROR: Problem removing recovery file!")
+
+    def recover_prompt(self):
+        # print("DEBUG: CALLED recover_prompt()")
+        dlg = wx.MessageDialog(None, "Do you want to recover the last print?",'Shutdown',wx.YES_NO)
+        result = dlg.ShowModal()
+        if result == wx.ID_YES:
+            self.recovery_info = self.getrecoverinfo()
+            self.initfullrecover()
+        else:
+            self.clearrecovery()
+
+    def initfullrecover(self):
+        # print("\nDEBUG: CALLED initfullrecover()\n")
+        self.shouldrecover = True
+        self.recovertemp = 0
+        if not self.p.online:
+            wx.CallAfter(self.statusbar.SetStatusText, _("Not connected to printer."))
+            return
+
+        self.p.send("M104 T0 S%f" % self.recovery_info["T0"])
+        if "copymode" in self.recovery_info: 
+            if(self.recovery_info["copymode"]): self.p.send("M104 T1 S%f" % self.recovery_info["T0"]) # Set other hotend to same temperature for copy mode
+        
+        if "T1" in self.recovery_info: self.p.send("M104 T1 S%f" % self.recovery_info["T1"])
+        self.p.send("M140 S%f" % self.recovery_info["B"])
+        time.sleep(1)
+        # print("WAITING FOR TEMPERATURE")
+
+    def posttemprecover(self):
+        # print("\nDEBUG: CALLED posttemprecover()\n")
+        self.p.send("G92 Z%f" % self.recovery_info["layer"]) # Set Z position
+        self.p.send("G0 Z%f" % float(self.recovery_info["layer"] + 10)) # Move print head up 10 mm before homing X and Y
+        time.sleep(1)
+        if "copymode" in self.recovery_info: 
+            if self.recovery_info["copymode"]: self.p.send("M605 S2 X%s" % self.recovery_info["copydistance"]) # Lock heads for copy mode
+        
+        self.p.send("G28 X Y") # Home X and Y
+        self.p.send("G0 E-20")
+        time.sleep(10)
+        if("tool" in self.recovery_info): # Recover which head we were using
+            self.p.send(self.recovery_info["tool"])
+        
+        time.sleep(5)
+        self.loadfile(None, self.getrecovergcodefile())
+
+    def postfileloadrecover(self):
+        # print("\nDEBUG: CALLED postfileloadrecover()\n")
+        mv_buffer = self.RCBUFSIZE + 1
+        ln_i = self.recovery_info["queueindex"] - 1
+        previous_line = self.fgcode.lines[ln_i]
+        restart_index = 0
+        while mv_buffer >= 0: # Move back to the last true move
+            if previous_line.x or previous_line.y or previous_line.z:
+                mv_buffer = mv_buffer - 1
+                # print("\nDEBUG: mv_buffer = " + str(mv_buffer))
+            if previous_line.raw.startswith("T"): # Switch extruders as we move back through the GCode
+                self.p.send(previous_line.raw)
+            ln_i = ln_i - 1
+            # print("\nDEBUG: ln_i = " + str(ln_i))
+            previous_line = self.fgcode.lines[ln_i]
+
+        restart_index = ln_i
+            
+        while (previous_line.x == None) or (previous_line.y == None): # Find an X and Y to start with
+            ln_i = ln_i - 1
+            previous_line = self.fgcode.lines[ln_i]
+
+            if previous_line.raw.startswith("T"):
+                self.p.send(previous_line.raw)
+
+        self.p.send("G0 X{0.x} Y{0.y}".format(previous_line)) # Move head to target X and Y position
+        time.sleep(5)
+        self.p.send("G0 Z%f" % (self.recovery_info["layer"])) # Move print head back down to normal position
+        self.p.send("G0 E0.1") # Extrude filament to begin printing
+        self.p.send("G92 E{0.e}".format(previous_line)) # Reset the extruder position
+        # print("\nDEBUG: SENT G92 E{0}".format(previous_line.e - 1))
+        self.p.send("M412 R")
+        self.p.send("M75")
+        time.sleep(10)
+        self.p.startprint(self.fgcode, restart_index)
+        self.on_startprint()
+        self.shouldrecover = False
 
     #  --------------------------------------------------------------
     #  Print/upload handling
@@ -1522,6 +1698,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 self.slice(name)
             else:
                 self.load_gcode_async(name)
+                self.setrecovergcode(name)
         else:
             dlg.Destroy()
 
@@ -1592,6 +1769,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.viz_last_layer = None
         if print_stats:
             self.output_gcode_stats()
+        if self.shouldrecover:
+            self.postfileloadrecover()
+
 
     def calculate_remaining_filament(self, length, extruder = 0):
         """
@@ -1726,6 +1906,9 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         pronsole.pronsole.endcb(self)
         if self.p.queueindex == 0:
             
+            if self.settings.powerrecover:
+                self.clearrecovery()
+
             if self.shutdownpostprint:
                 os.system("shutdown /s /t 1")
 
@@ -1741,6 +1924,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         """Callback when printer goes online"""
         self.log(_("Printer is now online."))
         wx.CallAfter(self.online_gui)
+        if self.canrecover():
+            self.recover_prompt()
+        else:
+            print("No recovery file")
     def online_gui(self):
         """Callback when printer goes online (graphical bits)"""
         self.connectbtn.SetLabel(_("Disconnect"))
@@ -1847,7 +2034,21 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 wx.CallAfter(self.gwindow.set_current_gline, gline)
             if hasattr(self.gviz, "set_current_gline"):
                 wx.CallAfter(self.gviz.set_current_gline, gline)
+            if self.p.printing and not self.shouldrecover:
+                self.recovery_info["layer"] = self.curlayer
+                self.recovery_info["queueindex"] = self.p.queueindex
+                self.setrecoverinfo(self.recovery_info)
         
+        if gline.raw.lstrip().startswith("M605"): # Check command first to avoid iterative check for every sent command
+            if all(c in gline.raw for c in ["M605", "S2", "X"]):
+                for op in gline.raw.split():
+                    if op.startswith("X"):
+                        self.recovery_info["copydistance"] = op[1:]
+                self.recovery_info["copymode"] = True
+            if all(c in gline.raw for c in ["M605", "S0"]): # Independent mode
+                self.recovery_info["copymode"] = False
+
+
     def layer_change_cb(self, newlayer):
         """Callback when the printed layer changed"""
         pronsole.pronsole.layer_change_cb(self, newlayer)
@@ -1856,11 +2057,26 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
 
     def tool_change_cb(self, tool):
         """Callback when the tool is changed"""
-        pass
+        # print("\nDEBUG TOOL CHANGED TO -> " + tool + "\n")
+        self.recovery_info["tool"] = "T"+tool
 
     def update_tempdisplay(self):
         try:
             temps = parse_temperature_report(self.tempreadings)
+
+            if self.shouldrecover and self.recovertemp < 5:
+                maxdiff = 0.0
+
+                for tempkey in temps:
+                    tempdiff = float(temps[tempkey][1]) - float(temps[tempkey][0])
+                    # print("tempdiff = " + str(tempdiff))
+                    if tempdiff > maxdiff:
+                        maxdiff = tempdiff
+                # print("maxdiff = " + str(maxdiff))
+                if maxdiff < 2: 
+                    self.recovertemp = self.recovertemp +  1
+                    if self.recovertemp == 5:
+                        self.posttemprecover()
 
             # Special handling for first extruder
             if ("T0" in temps and temps["T0"][0]):
@@ -1879,8 +2095,10 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 # setpoint = float(temps["T0"][1]) if ("T0" in temps and temps["T0"][1]) else None 
                 if ("T0" in temps and temps["T0"][1]):
                     setpoint = float(temps["T0"][1])
+                    self.recovery_info["T0"] = setpoint
                 elif ("T" in temps and temps["T"][1]):
                     setpoint = float(temps["T"][1])
+                    self.recovery_info["T0"] = setpoint
                 else:
                     setpoint = None
                 if setpoint is not None:
@@ -1903,6 +2121,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                 setpoint = temps["B"][1]
                 if setpoint:
                     setpoint = float(setpoint)
+                    self.recovery_info["B"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetBedTargetTemperature, setpoint)
                     if self.display_gauges: wx.CallAfter(self.bedtgauge.SetTarget, setpoint)
         except:
