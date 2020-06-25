@@ -35,8 +35,8 @@ class ProntRPC:
         cache_dir = os.path.join(user_cache_dir("Printrun"))
         rpclock_file = os.path.join(cache_dir,"rpclock")
         rpcwait_file = os.path.join(cache_dir,"rpcwait")
-        addr = "" if pronsole.settings.expose_rpc else "localhost"
-        # print("RPCSERVER -> " + addr)
+        # addr = "" if pronsole.settings.expose_rpc else "localhost"
+        addr = "localhost"
         while True:
             try:
                 self.server = SimpleXMLRPCServer((addr, used_port),
