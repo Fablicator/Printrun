@@ -182,10 +182,6 @@ class pronsole(cmd.Cmd):
         self.settings = Settings(self)
         self.settings._add(BuildDimensionsSetting("build_dimensions", "200x200x100+0+0+0+0+0+0", _("Build dimensions"), _("Dimensions of Build Platform\n & optional offset of origin\n & optional switch position\n\nExamples:\n   XXXxYYY\n   XXX,YYY,ZZZ\n   XXXxYYYxZZZ+OffX+OffY+OffZ\nXXXxYYYxZZZ+OffX+OffY+OffZ+HomeX+HomeY+HomeZ"), "Printer"), self.update_build_dimensions)
         self.settings._port_list = self.scanserial
-        self.settings._temperature_abs_cb = self.set_temp_preset
-        self.settings._temperature_pla_cb = self.set_temp_preset
-        self.settings._bedtemp_abs_cb = self.set_temp_preset
-        self.settings._bedtemp_pla_cb = self.set_temp_preset
         self.update_build_dimensions(None, self.settings.build_dimensions)
         self.update_tcp_streaming_mode(None, self.settings.tcp_streaming_mode)
         self.monitoring = 0
@@ -322,7 +318,8 @@ class pronsole(cmd.Cmd):
             specials = {}
             specials["extruder_temp"] = str(int(self.status.extruder_temp))
             specials["extruder_temp_target"] = str(int(self.status.extruder_temp_target))
-            specials["port"] = self.settings.port[5:]
+            # port: /dev/tty* | netaddress:port
+            specials["port"] = self.settings.port.replace('/dev/', '')
             if self.status.extruder_temp_target == 0:
                 specials["extruder_temp_fancy"] = str(int(self.status.extruder_temp)) + DEG
             else:
@@ -812,7 +809,8 @@ class pronsole(cmd.Cmd):
                 self.logError(traceback.format_exc())
             return False
         self.statuscheck = True
-        self.status_thread = threading.Thread(target = self.statuschecker)
+        self.status_thread = threading.Thread(target = self.statuschecker,
+                                              name = 'status thread')
         self.status_thread.start()
         return True
 
@@ -876,6 +874,8 @@ class pronsole(cmd.Cmd):
 
         for g in ['/dev/ttyUSB*', '/dev/ttyACM*', "/dev/tty.*", "/dev/cu.*", "/dev/rfcomm*"]:
             baselist += glob.glob(g)
+        if(sys.platform!="win32" and self.settings.devicepath):
+            baselist += glob.glob(self.settings.devicepath)
         return [p for p in baselist if self._bluetoothSerialFilter(p)]
 
     def _bluetoothSerialFilter(self, serial):
@@ -908,7 +908,7 @@ class pronsole(cmd.Cmd):
             if self.p.writefailures >= 4:
                 self.logError(_("Disconnecting after 4 failed writes."))
                 self.status_thread = None
-                self.disconnect()
+                self.p.disconnect()
                 return
             if do_monitoring:
                 if self.sdprinting and not self.paused:
@@ -1279,8 +1279,6 @@ class pronsole(cmd.Cmd):
                             self.spool_manager.editLength(
                                 -self.fgcode.filament_length, extruder = 0)
 
-        else:
-
             if not self.settings.final_command:
                 return
             output = get_command_output(self.settings.final_command,
@@ -1456,7 +1454,7 @@ class pronsole(cmd.Cmd):
     def help_settemp(self):
         self.log(_("Sets the hotend temperature to the value entered."))
         self.log(_("Enter either a temperature in celsius or one of the following keywords"))
-        self.log(", ".join([i + "(" + self.temps[i] + ")" for i in self.temps.keys()]))
+        self.log(', '.join('%s (%s)'%kv for kv in self.temps.items()))
 
     def complete_settemp(self, text, line, begidx, endidx):
         if (len(line.split()) == 2 and line[-1] != " ") or (len(line.split()) == 1 and line[-1] == " "):

@@ -75,6 +75,7 @@ To use pronterface, you need:
   * pyreadline (not needed on Linux)
   * wxPython 4
   * pyglet
+  * appdirs
   * numpy (for 3D view)
   * pycairo (to use Projector feature)
   * cairosvg (to use Projector feature)
@@ -317,7 +318,7 @@ PC> macro move_down_by
 Enter macro using indented lines, end with empty line
 ..> G91
 ..> G1 Z-{0}
-..> G92
+..> G90
 ..>
 ```
 
@@ -466,6 +467,8 @@ List of available commands:
 # LICENSE
 
 ```
+Copyright (C) 2011-2020 Kliment Yanev, Guillaume Seguin
+
 Printrun is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or

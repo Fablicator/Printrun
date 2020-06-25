@@ -92,6 +92,8 @@ class Setting:
     def update(self):
         raise NotImplementedError
 
+    def validate(self, value): pass
+
     def __str__(self):
         return self.name
 
@@ -119,12 +121,43 @@ class wxSetting(Setting):
     def update(self):
         self.value = self.widget.GetValue()
 
+    def set_default(self, e):
+        if e.CmdDown() and e.ButtonDClick() and self.default is not "":
+            self.widget.SetValue(self.default)
+        else:
+            e.Skip()
+
 class StringSetting(wxSetting):
 
     def get_specific_widget(self, parent):
         import wx
         self.widget = wx.TextCtrl(parent, -1, str(self.value))
         return self.widget
+
+def wxColorToStr(color, withAlpha = True):
+    # including Alpha seems to be non standard in CSS
+    format = '#{0.red:02X}{0.green:02X}{0.blue:02X}' \
+        + ('{0.alpha:02X}' if withAlpha else '')
+    return format.format(color)
+
+class ColorSetting(wxSetting):
+    def __init__(self, name, default, label = None, help = None, group = None, isRGBA=True):
+        super().__init__(name, default, label, help, group)
+        self.isRGBA = isRGBA
+
+    def validate(self, value):
+        from .utils import check_rgb_color, check_rgba_color
+        validate = check_rgba_color if self.isRGBA else check_rgb_color
+        validate(value)
+
+    def get_specific_widget(self, parent):
+        import wx
+        self.widget = wx.ColourPickerCtrl(parent, colour=wx.Colour(self.value), style=wx.CLRP_USE_TEXTCTRL)
+        self.widget.SetValue = self.widget.SetColour
+        self.widget.LayoutDirection = wx.Layout_RightToLeft
+        return self.widget
+    def update(self):
+        self._value = wxColorToStr(self.widget.Colour, self.isRGBA)
 
 class ComboSetting(wxSetting):
 
@@ -269,6 +302,15 @@ class Settings:
         # the initial value determines the type
         self._add(StringSetting("port", "", _("Serial port"), _("Port used to communicate with printer")))
         self._add(ComboSetting("baudrate", 115200, self.__baudrate_list(), _("Baud rate"), _("Communications Speed")))
+        self._add(BooleanSetting("tcp_streaming_mode", False, _("TCP streaming mode"), _("When using a TCP connection to the printer, the streaming mode will not wait for acks from the printer to send new commands. This will break things such as ETA prediction, but can result in smoother prints.")), root.update_tcp_streaming_mode)
+        self._add(BooleanSetting("rpc_server", True, _("RPC server"), _("Enable RPC server to allow remotely querying print status")), root.update_rpc_server)
+        self._add(BooleanSetting("dtr", True, _("DTR"), _("Disabling DTR would prevent Arduino (RAMPS) from resetting upon connection"), "Printer"))
+        if(sys.platform!="win32"):
+            self._add(StringSetting("devicepath", "", _("Device name pattern"), _("Custom device pattern: for example /dev/3DP_* "), "Printer"))
+        self._add(SpinSetting("bedtemp_abs", 110, 0, 400, _("Bed temperature for ABS"), _("Heated Build Platform temp for ABS (deg C)"), "Printer"), root.set_temp_preset)
+        self._add(SpinSetting("bedtemp_pla", 60, 0, 400, _("Bed temperature for PLA"), _("Heated Build Platform temp for PLA (deg C)"), "Printer"), root.set_temp_preset)
+        self._add(SpinSetting("temperature_abs", 230, 0, 400, _("Extruder temperature for ABS"), _("Extruder temp for ABS (deg C)"), "Printer"), root.set_temp_preset)
+        self._add(SpinSetting("temperature_pla", 185, 0, 400, _("Extruder temperature for PLA"), _("Extruder temp for PLA (deg C)"), "Printer"), root.set_temp_preset)
         self._add(HiddenSetting("tcp_streaming_mode", False, _("TCP streaming mode"), _("When using a TCP connection to the printer, the streaming mode will not wait for acks from the printer to send new commands. This will break things such as ETA prediction, but can result in smoother prints.")), root.update_tcp_streaming_mode)
         self._add(HiddenSetting("rpc_server", True, _("RPC server"), _("Enable RPC server to allow remotely querying print status")), root.update_rpc_server)
         self._add(HiddenSetting("dtr", True, _("DTR"), _("Disabling DTR would prevent Arduino (RAMPS) from resetting upon connection"), "Printer"))
@@ -326,13 +368,11 @@ class Settings:
             return object.__getattribute__(self, name)
         return getattr(self, "_" + name).value
 
-    def _add(self, setting, callback = None, validate = None,
+    def _add(self, setting, callback = None,
              alias = None, autocomplete_list = None):
         setattr(self, setting.name, setting)
         if callback:
             setattr(self, "__" + setting.name + "_cb", callback)
-        if validate:
-            setattr(self, "__" + setting.name + "_validate", validate)
         if alias:
             setattr(self, "__" + setting.name + "_alias", alias)
         if autocomplete_list:
@@ -345,20 +385,16 @@ class Settings:
             pass
         except AttributeError:
             pass
-        try:
-            getattr(self, "__%s_validate" % key)(value)
-        except AttributeError:
-            pass
+        setting = getattr(self, '_'+key)
+        setting.validate(value)
         t = type(getattr(self, key))
-        if t == bool and value == "False": setattr(self, key, False)
-        else: setattr(self, key, t(value))
+        if t == bool and value == "False":
+            value = False
+        setattr(self, key, t(value))
         try:
-            cb = None
-            try:
-                cb = getattr(self, "__%s_cb" % key)
-            except AttributeError:
-                pass
-            if cb is not None: cb(key, value)
+            cb = getattr(self, "__%s_cb" % key, None)
+            if cb is not None:
+                cb(key, value)
         except:
             logging.warning((_("Failed to run callback after setting \"%s\":") % key) +
                             "\n" + traceback.format_exc())

@@ -1,8 +1,8 @@
 # python (>= 3.6)
-pyserial >= 2.7
 pathlib2
 wxPython
 numpy
+pyserial (>= 3.0)
 pyglet (>= 1.1)
 cffi
 cairocffi
