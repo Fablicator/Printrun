@@ -122,7 +122,7 @@ class wxSetting(Setting):
         self.value = self.widget.GetValue()
 
     def set_default(self, e):
-        if e.CmdDown() and e.ButtonDClick() and self.default is not "":
+        if e.CmdDown() and e.ButtonDClick() and self.default != "":
             self.widget.SetValue(self.default)
         else:
             e.Skip()
@@ -393,7 +393,7 @@ class Settings:
         setattr(self, key, t(value))
         try:
             cb = getattr(self, "__%s_cb" % key, None)
-            if cb is not None:
+            if cb != None:
                 cb(key, value)
         except:
             logging.warning((_("Failed to run callback after setting \"%s\":") % key) +
