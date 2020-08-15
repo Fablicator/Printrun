@@ -931,6 +931,9 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         # info.SetVersion(printcore.__version__)
 
         description = """This software is a modified version of Printrun, a pure python CNC interface."""
+        cache_dir = os.path.join(user_cache_dir("Printrun"))
+        rpc_port = open(os.path.join(cache_dir,"rpclock")).read()
+        description += "\n\nRPC Server @ port %s" % rpc_port
 
         description += "\n\n" + \
                        _("%.02fmm of filament have been extruded during prints") \
