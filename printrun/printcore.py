@@ -283,9 +283,9 @@ class printcore():
         """Reset the printer
         """
         if self.printer and not self.printer_tcp:
-            self.printer.dtr = 1
-            time.sleep(0.2)
             self.printer.dtr = 0
+            time.sleep(0.5)
+            self.printer.dtr = 1
 
     def _readline_buf(self):
         "Try to readline from buffer"
@@ -347,9 +347,10 @@ class printcore():
                 if self.loud: logging.info("RECV: %s" % line.rstrip())
             return line
         except UnicodeDecodeError:
-            self.logError(_("Got rubbish reply from %s at baudrate %s:") % (self.port, self.baud) +
-                              "\n" + _("Maybe a bad baudrate?"))
-            return None
+            # self.logError(_("Got rubbish reply from %s at baudrate %s:") % (self.port, self.baud) +
+            #                   "\n" + _("Maybe a bad baudrate?"))
+            # return None
+            return ""
         except SelectError as e:
             if 'Bad file descriptor' in e.args[1]:
                 self.logError(_("Can't read from printer (disconnected?) (SelectError {0}): {1}").format(e.errno, decode_utf8(e.strerror)))
