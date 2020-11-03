@@ -543,6 +543,10 @@ class PronterWindow(MainWindow, pronsole.pronsole):
             wx.CallAfter(self.btemp.SetBackgroundColour, "white")
             wx.CallAfter(self.btemp.Refresh)
 
+    # def setchagui(self, f):
+    #     self.csetpoint = f
+    #     if self.display_gauges: self.chatgauge.SetTarget(int(f))
+
     def sethotendgui(self, f): # Called with 0 as an input. Just initalizes gui
         self.hsetpoint = f
 
@@ -989,6 +993,7 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
         self.settings._add(FloatSpinSetting("gcview_path_height", 0.3, 0.01, 2, _("Layer height for 3D viewer"), _("Height of printed path in 3D viewer"), "Viewer", increment = 0.05), self.update_gcview_params)
         self.settings._add(BooleanSetting("tempgraph", False, _("Display temperature graph"), _("Display time-lapse temperature graph"), "UI"), self.reload_ui)
         self.settings._add(BooleanSetting("tempgauges", True, _("Display temperature gauges"), _("Display graphical gauges for temperatures visualization"), "UI"), self.reload_ui)
+        self.settings._add(BooleanSetting("chambertempgauge", False, _("Display chamber temperature gauge"), _("Display chamber temperature gauge"), "UI"), self.reload_ui)
         self.settings._add(BooleanSetting("lockbox", False, _("Display interface lock checkbox"), _("Display a checkbox that, when check, locks most of Pronterface"), "UI"), self.reload_ui)
         self.settings._add(BooleanSetting("lockonstart", False, _("Lock interface upon print start"), _("If lock checkbox is enabled, lock the interface when starting a print"), "UI"))
         self.settings._add(BooleanSetting("refreshwhenloading", True, _("Update UI during G-Code load"), _("Regularly update visualization during the load of a G-Code file"), "UI"))
@@ -2126,7 +2131,16 @@ Printrun. If not, see <http://www.gnu.org/licenses/>."""
                     setpoint = float(setpoint)
                     self.recovery_info["B"] = setpoint
                     if self.display_graph: wx.CallAfter(self.graph.SetBedTargetTemperature, setpoint)
-                    if self.display_gauges: wx.CallAfter(self.bedtgauge.SetTarget, setpoint)
+                    if self.display_gauges: wx.CallAfter(self.chatgauge.SetTarget, setpoint)
+            
+            chamber_temp = float(temps["C"][0]) if "C" in temps and temps["C"][0] else None
+            if chamber_temp is not None:
+                if self.display_gauges: wx.CallAfter(self.chatgauge.SetValue, chamber_temp)
+                setpoint = temps["C"][1]
+                if setpoint:
+                    setpoint = float(setpoint)
+                    self.recovery_info["C"] = setpoint
+                    if self.display_gauges: wx.CallAfter(self.chatgauge.SetTarget, setpoint)
         except:
             self.logError(traceback.format_exc())
 

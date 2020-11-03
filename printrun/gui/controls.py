@@ -44,53 +44,80 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
         gauges_base_line = base_line + 7
     else:
         gauges_base_line = base_line + 6
-    tempdisp_line = gauges_base_line + (2 if root.display_gauges else 0)
+    tempdisp_line = gauges_base_line + (4 if root.display_gauges else 0)
     if mini_mode and root.display_graph:
         e_base_line = base_line + 3
     else:
         e_base_line = base_line + 2
 
-    if root.settings.extruders == 1:
-        pos_mapping = {
-            "htemp_label": (base_line + 0, 0),
-            "htemp_off": (base_line + 0, 2),
-            "htemp_val": (base_line + 0, 3),
-            "htemp_set": (base_line + 0, 4),
-            "btemp_label": (base_line + 1, 0),
-            "btemp_off": (base_line + 1, 2),
-            "btemp_val": (base_line + 1, 3),
-            "btemp_set": (base_line + 1, 4),
-            "ebuttons": (e_base_line + 0, 0),
-            "esettings": (e_base_line + 1, 0),
-            "speedcontrol": (e_base_line + 2, 0),
-            "flowcontrol": (e_base_line + 3, 0),
-            "htemp_gauge0": (gauges_base_line + 0, 0),
-            "btemp_gauge": (gauges_base_line + 1, 0),
-            "tempdisp": (tempdisp_line, 0),
-            "extrude": (3, 0),
-            "reverse": (3, 2),
-        }
-    else:
-        pos_mapping = {
-            "htemp_label": (base_line + 0, 0),
-            "htemp_off": (base_line + 0, 2),
-            "htemp_val": (base_line + 0, 3),
-            "htemp_set": (base_line + 0, 4),
-            "btemp_label": (base_line + 1, 0),
-            "btemp_off": (base_line + 1, 2),
-            "btemp_val": (base_line + 1, 3),
-            "btemp_set": (base_line + 1, 4),
-            "ebuttons": (e_base_line + 0, 0),
-            "esettings": (e_base_line + 1, 0),
-            "speedcontrol": (e_base_line + 2, 0),
-            "flowcontrol": (e_base_line + 3, 0),
-            "htemp_gauge0": (gauges_base_line + 0, 0),
-            "htemp_gauge1": (gauges_base_line + 1, 0),
-            "btemp_gauge": (gauges_base_line + 2, 0),
-            "tempdisp": (tempdisp_line+1, 0),
-            "extrude": (3, 0),
-            "reverse": (3, 2),
-        }
+    pos_mapping = {
+        "htemp_label": (base_line + 0, 0),
+        "htemp_off": (base_line + 0, 2),
+        "htemp_val": (base_line + 0, 3),
+        "htemp_set": (base_line + 0, 4),
+        "btemp_label": (base_line + 1, 0),
+        "btemp_off": (base_line + 1, 2),
+        "btemp_val": (base_line + 1, 3),
+        "btemp_set": (base_line + 1, 4),
+        "ebuttons": (e_base_line + 0, 0),
+        "esettings": (e_base_line + 1, 0),
+        "speedcontrol": (e_base_line + 2, 0),
+        "flowcontrol": (e_base_line + 3, 0),
+        "htemp_gauge0": (gauges_base_line + 0, 0),
+        "btemp_gauge": (gauges_base_line + 1, 0),
+        "tempdisp": (tempdisp_line, 0),
+        "extrude": (3, 0),
+        "reverse": (3, 2),
+    }
+    if root.settings.chambertempgauge:
+            pos_mapping["ctemp_gauge"] = (gauges_base_line + 2, 0)
+    if root.settings.extruders == 2:
+        pos_mapping["htemp_gauge1"] = (gauges_base_line + 1, 0)
+        pos_mapping["btemp_gauge"] = (gauges_base_line + 2, 0)
+        if root.settings.chambertempgauge:
+            pos_mapping["ctemp_gauge"] = (gauges_base_line + 3, 0)
+
+    # if root.settings.extruders == 1:
+    #     pos_mapping = {
+    #         "htemp_label": (base_line + 0, 0),
+    #         "htemp_off": (base_line + 0, 2),
+    #         "htemp_val": (base_line + 0, 3),
+    #         "htemp_set": (base_line + 0, 4),
+    #         "btemp_label": (base_line + 1, 0),
+    #         "btemp_off": (base_line + 1, 2),
+    #         "btemp_val": (base_line + 1, 3),
+    #         "btemp_set": (base_line + 1, 4),
+    #         "ebuttons": (e_base_line + 0, 0),
+    #         "esettings": (e_base_line + 1, 0),
+    #         "speedcontrol": (e_base_line + 2, 0),
+    #         "flowcontrol": (e_base_line + 3, 0),
+    #         "htemp_gauge0": (gauges_base_line + 0, 0),
+    #         "btemp_gauge": (gauges_base_line + 1, 0),
+    #         "tempdisp": (tempdisp_line, 0),
+    #         "extrude": (3, 0),
+    #         "reverse": (3, 2),
+    #     }
+    # else:
+    #     pos_mapping = {
+    #         "htemp_label": (base_line + 0, 0),
+    #         "htemp_off": (base_line + 0, 2),
+    #         "htemp_val": (base_line + 0, 3),
+    #         "htemp_set": (base_line + 0, 4),
+    #         "btemp_label": (base_line + 1, 0),
+    #         "btemp_off": (base_line + 1, 2),
+    #         "btemp_val": (base_line + 1, 3),
+    #         "btemp_set": (base_line + 1, 4),
+    #         "ebuttons": (e_base_line + 0, 0),
+    #         "esettings": (e_base_line + 1, 0),
+    #         "speedcontrol": (e_base_line + 2, 0),
+    #         "flowcontrol": (e_base_line + 3, 0),
+    #         "htemp_gauge0": (gauges_base_line + 0, 0),
+    #         "htemp_gauge1": (gauges_base_line + 1, 0),
+    #         "btemp_gauge": (gauges_base_line + 2, 0),
+    #         "tempdisp": (tempdisp_line+1, 0),
+    #         "extrude": (3, 0),
+    #         "reverse": (3, 2),
+    #     }
 
     span_mapping = {
         "htemp_label": (1, 2),
@@ -108,6 +135,7 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
         "htemp_gauge0": (1, 5 if mini_mode else 6),
         "htemp_gauge1": (1, 5 if mini_mode else 6),
         "btemp_gauge": (1, 5 if mini_mode else 6),
+        "ctemp_gauge": (1, 5 if mini_mode else 6),
         "tempdisp": (1, 5 if mini_mode else 6),
         "extrude": (1, 2),
         "reverse": (1, 3),
@@ -295,6 +323,10 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
 
         root.bedtgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Bed:"), maxval = 150, bgcolor = root.bgcolor)
         add("btemp_gauge", root.bedtgauge, flag = wx.EXPAND)
+
+        if root.settings.chambertempgauge:
+            root.chatgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Chamber:"), maxval = 100, bgcolor = root.bgcolor)
+            add("ctemp_gauge", root.chatgauge, flag = wx.EXPAND)
 
         def hotendgauge_scroll_setpoint(e):
             rot = e.GetWheelRotation()
