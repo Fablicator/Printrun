@@ -27,18 +27,17 @@ jobs:
           python -m pip install --upgrade pip setuptools wheel cython cffi pypiwin32 -r requirements.txt
           pip install https://github.com/pyinstaller/pyinstaller/tarball/develop
       
-      - name: Build Cython ext
-        run: python setup.py build_ext --inplace
-      
       - name: Make pyinstaller spec
         run: pyi-makespec -F --add-data "./images/*;images" --add-data "./*.png;." --add-data "./*.ico;." -w -i ./images/fablicator.ico fablicator.py
       
       - name: Make pyinstaller build
         run: pyinstaller --clean fablicator.spec -y
       
-      - name: Package for release
-        run: .\scripts\package_windows.ps1
-        shell: powershell
+      - name: Create installer
+        run: iscc .\win_installer.iss
+      
+      - name: Zip executable, docs, and configs
+        run: Compress-Archive -Path ".\dist\fablicator.exe", ".\Documentation", ".\Configs" -DestinationPath ".\release\fablicator_interface-win10.zip"
       
       - name: Create Release
         id: create_release
