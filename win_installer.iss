@@ -1,11 +1,14 @@
-; LocalAppdata\Printrun\Printrun\
 [Setup]
 AppName = Fablicator Interface
 AppVersion = 2.0
-DefaultDirName = {sd}\Fablicator\Fablicator
-DefaultGroupName = Fablicator
 ChangesAssociations = yes
 CloseApplications = yes
+DefaultDirName = {sd}\Fablicator\Fablicator
+DefaultGroupName = Fablicator
+OutputBaseFilename = fablicator_interface-setup-win10
+OutputDir = dist
+UninstallDisplayName = Fablicator Interface
+UninstallDisplayIcon = {app}\fablicator.exe,0
 
 [Types]
 Name: "main"; Description: "Select printer type"; Flags: iscustom
@@ -22,8 +25,8 @@ Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Add
 Name: associate; Description: "&Associate .gcode files"; GroupDescription: "Other tasks:"
 
 [Files]
-Source: "fablicator.exe"; DestDir: "{app}"; Components: required
-Source: "Documentation\*"; DestDir: "{app}\Documentation"; Components: required
+Source: "dist\fablicator.exe"; DestDir: "{app}"; Components: required
+Source: "Documentation\*"; DestDir: "{app}\Documentation"; Components: required; Flags: 
 Source: "Configs\mx\printrunconf.ini"; DestDir: "{localappdata}\Printrun\Printrun"; Components: cfg\mx
 Source: "Configs\sx\printrunconf.ini"; DestDir: "{localappdata}\Printrun\Printrun"; Components: cfg\sx
 Source: "Configs\fm1\printrunconf.ini"; DestDir: "{localappdata}\Printrun\Printrun"; Components: cfg\fm1
