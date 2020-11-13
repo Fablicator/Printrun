@@ -6,7 +6,7 @@ CloseApplications = yes
 DefaultDirName = {sd}\Fablicator\Fablicator
 DefaultGroupName = Fablicator
 OutputBaseFilename = fablicator_interface-setup-win10
-OutputDir = dist
+OutputDir = release
 UninstallDisplayName = Fablicator Interface
 UninstallDisplayIcon = {app}\fablicator.exe,0
 
@@ -22,6 +22,7 @@ Name: "cfg/fm1"; Description: "FM1"; Types: main; Flags: exclusive
 
 [Tasks]
 Name: desktopicon; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
+Name: docshortcut; Description: "Create a &desktop shortcut for the documentation"; GroupDescription: "Additional icons:"
 Name: associate; Description: "&Associate .gcode files"; GroupDescription: "Other tasks:"
 
 [Files]
@@ -40,6 +41,8 @@ Root: HKA; Subkey: "Software\Classes\GcodeFile.gcode\shell\open\command"; ValueT
 Root: HKA; Subkey: "Software\Classes\Applications\fablicator.exe\SupportedTypes"; ValueType: string; ValueName: ".gcode"; ValueData: ""; Tasks: associate
 
 [Icons]
-Name: "{group}\Fablicator"; Filename: "{app}\fablicator.exe"; WorkingDir: "{app}"
-Name: "{group}\Uninstall Fablicator"; Filename: "{uninstallexe}"
-Name: "{userdesktop}\Fablicator"; Filename: "{app}\fablicator.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{group}\Fablicator Interface"; Filename: "{app}\fablicator.exe"; WorkingDir: "{app}"
+Name: "{group}\Fablicator Interface - User Manual"; Filename: "{app}\Documentation\FablicatorInterface-UserManual.pdf"; WorkingDir: "{app}"
+Name: "{group}\Uninstall Fablicator Interface"; Filename: "{uninstallexe}"
+Name: "{userdesktop}\Fablicator Interface"; Filename: "{app}\fablicator.exe"; WorkingDir: "{app}"; Tasks: desktopicon
+Name: "{userdesktop}\Fablicator Interface - User Manual"; Filename: "{app}\Documentation\FablicatorInterface-UserManual.pdf"; WorkingDir: "{app}"; Tasks: docshortcut

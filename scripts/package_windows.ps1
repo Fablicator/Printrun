@@ -18,3 +18,11 @@ pyinstaller --clean fablicator.spec -y
 
 # Create installer
 iscc .\win_installer.iss
+
+# Package zip file
+$archive = @{
+    Path = ".\dist\fablicator.exe", ".\Documentation", ".\Configs"
+    DestinationPath = ".\release\fablicator_interface-win10.zip"
+}
+
+Compress-Archive @archive
