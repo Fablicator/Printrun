@@ -932,7 +932,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
         info = wx.adv.AboutDialogInfo()
         info.SetIcon(wx.Icon(iconfile("fablicator_logo.png"), wx.BITMAP_TYPE_PNG))
         info.SetName('Fablicator Interface')
-        # info.SetVersion(printcore.__version__)
+        info.SetVersion(printcore.__version__)
 
         description = """This software is a modified version of Printrun, a pure python CNC interface."""
         cache_dir = os.path.join(user_cache_dir("Printrun"))
@@ -944,7 +944,7 @@ class PronterWindow(MainWindow, pronsole.pronsole):
                        % self.settings.total_filament_used
 
         info.SetDescription(description)
-        info.SetCopyright('(C) 2011 - 2020')
+        # info.SetCopyright('(C) 2011 - 2020')
         info.SetWebSite('https://github.com/Fablicator/Printrun', "Source code on GitHub")
 
         licence = """\
