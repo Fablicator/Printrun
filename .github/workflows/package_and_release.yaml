@@ -3,7 +3,7 @@ name: Package and Release
 on:
   push:
     tags:
-      - 'release-v*'
+      - 'build-v*'
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
