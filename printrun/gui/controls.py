@@ -29,10 +29,10 @@ class XYZControlsSizer(wx.GridBagSizer):
         super(XYZControlsSizer, self).__init__()
         if not parentpanel: parentpanel = root.panel
         root.xyb = XYButtons(parentpanel, root.moveXY, root.homeButtonClicked, root.spacebarAction, root.bgcolor, zcallback=root.moveZ)
+        root.xyb.SetToolTip(_('[J]og controls. (Shift)+TAB ESC Shift/Ctrl+(arrows PgUp/PgDn)'))
         self.Add(root.xyb, pos = (0, 1), flag = wx.ALIGN_CENTER)
         root.zb = ZButtons(parentpanel, root.moveZ, root.bgcolor)
         self.Add(root.zb, pos = (0, 2), flag = wx.ALIGN_CENTER)
-        wx.CallAfter(root.xyb.SetFocus)
 
 def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode = False):
     standalone_mode = extra_buttons is not None
@@ -156,17 +156,13 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     root.set_temp_preset("else", "unused")
 
     add("htemp_label", wx.StaticText(parentpanel, -1, _("Heat:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
-    htemp_choices = [root.temps[i] + " (" + i + ")" for i in sorted(root.temps.keys(), key = lambda x:root.temps[x])]
 
     root.settoff = make_button(parentpanel, _("Off"), lambda e: root.do_settemp("off"), _("Switch Hotend Off"), size = (38, -1), style = wx.BU_EXACTFIT)
     root.printerControls.append(root.settoff)
     add("htemp_off", root.settoff)
 
-    if root.settings.last_temperature not in map(float, root.temps.values()):
-        htemp_choices = [str(root.settings.last_temperature)] + htemp_choices
-    root.htemp = wx.ComboBox(parentpanel, -1, choices = htemp_choices,
-                             style = wx.CB_DROPDOWN, size = (115, -1))
-    root.htemp.SetToolTip(wx.ToolTip(_("Select Temperature for Hotend")))
+    root.htemp = wx.ComboBox(parentpanel, style = wx.CB_DROPDOWN, size = (115, -1))
+    root.htemp.SetToolTip(wx.ToolTip(_("Select Temperature for [H]otend")))
     root.htemp.Bind(wx.EVT_COMBOBOX, root.htemp_change)
 
     add("htemp_val", root.htemp)
@@ -176,17 +172,13 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
 
     # Bed temp
     add("btemp_label", wx.StaticText(parentpanel, -1, _("Bed:")), flag = wx.ALIGN_CENTER_VERTICAL | wx.ALIGN_RIGHT)
-    btemp_choices = [root.bedtemps[i] + " (" + i + ")" for i in sorted(root.bedtemps.keys(), key = lambda x:root.temps[x])]
 
     root.setboff = make_button(parentpanel, _("Off"), lambda e: root.do_bedtemp("off"), _("Switch Heated Bed Off"), size = (38, -1), style = wx.BU_EXACTFIT)
     root.printerControls.append(root.setboff)
     add("btemp_off", root.setboff)
 
-    if root.settings.last_bed_temperature not in map(float, root.bedtemps.values()):
-        btemp_choices = [str(root.settings.last_bed_temperature)] + btemp_choices
-    root.btemp = wx.ComboBox(parentpanel, -1, choices = btemp_choices,
-                             style = wx.CB_DROPDOWN, size = (115, -1))
-    root.btemp.SetToolTip(wx.ToolTip(_("Select Temperature for Heated Bed")))
+    root.btemp = wx.ComboBox(parentpanel, style = wx.CB_DROPDOWN, size = (115, -1))
+    root.btemp.SetToolTip(wx.ToolTip(_("Select Temperature for Heated [B]ed")))
     root.btemp.Bind(wx.EVT_COMBOBOX, root.btemp_change)
     add("btemp_val", root.btemp)
 
@@ -194,24 +186,17 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
     root.printerControls.append(root.setbbtn)
     add("btemp_set", root.setbbtn, flag = wx.EXPAND)
 
-    root.btemp.SetValue(str(root.settings.last_bed_temperature))
-    root.htemp.SetValue(str(root.settings.last_temperature))
+    def set_labeled(temp, choices, widget):
+        choices = [(float(p[1]), p[0]) for p in choices.items()]
+        if not next((1 for p in choices if p[0] == temp), False):
+            choices.append((temp, 'user'))
 
-    # added for an error where only the bed would get (pla) or (abs).
-    # This ensures, if last temp is a default pla or abs, it will be marked so.
-    # if it is not, then a (user) remark is added. This denotes a manual entry
+        choices = sorted(choices)
+        widget.Items = ['%s (%s)'%tl for tl in choices]
+        widget.Selection = next((i for i, tl in enumerate(choices) if tl[0] == temp), -1)
 
-    for i in btemp_choices:
-        if i.split()[0] == str(root.settings.last_bed_temperature).split('.')[0] or i.split()[0] == str(root.settings.last_bed_temperature):
-            root.btemp.SetValue(i)
-    for i in htemp_choices:
-        if i.split()[0] == str(root.settings.last_temperature).split('.')[0] or i.split()[0] == str(root.settings.last_temperature):
-            root.htemp.SetValue(i)
-
-    if '(' not in root.btemp.Value:
-        root.btemp.SetValue(root.btemp.Value + ' (user)')
-    if '(' not in root.htemp.Value:
-        root.htemp.SetValue(root.htemp.Value + ' (user)')
+    set_labeled(root.settings.last_bed_temperature, root.bedtemps, root.btemp)
+    set_labeled(root.settings.last_temperature, root.temps, root.htemp)
 
     # Speed control #
     speedpanel = root.newPanel(parentpanel)
@@ -294,23 +279,28 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
             add("htemp_gauge1", root.hottgauge1, flag = wx.EXPAND)
 
         root.bedtgauge = TempGauge(parentpanel, size = (-1, 24), title = _("Bed:"), maxval = 150, bgcolor = root.bgcolor)
+        root.bedtgauge.SetTarget(root.settings.last_bed_temperature)
+        # root.bsetpoint = root.settings.last_bed_temperature
         add("btemp_gauge", root.bedtgauge, flag = wx.EXPAND)
 
-        def hotendgauge_scroll_setpoint(e):
-            rot = e.GetWheelRotation()
-            if rot > 0:
-                root.do_settemp(str(root.hsetpoint + 1))
-            elif rot < 0:
-                root.do_settemp(str(max(0, root.hsetpoint - 1)))
+        def scroll_gauge(rot, cmd, setpoint):
+            if rot:
+                temp = setpoint + (1 if rot > 0 else -1)
+                cmd(str(max(0, temp)))
 
-        def bedgauge_scroll_setpoint(e):
-            rot = e.GetWheelRotation()
-            if rot > 0:
-                root.do_settemp(str(root.bsetpoint + 1))
-            elif rot < 0:
-                root.do_settemp(str(max(0, root.bsetpoint - 1)))
-        #root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotendgauge_scroll_setpoint)
-        #root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bedgauge_scroll_setpoint)
+        def hotend_handler(e):
+            scroll_gauge(e.WheelRotation, root.do_settemp, root.hsetpoint)
+
+        def bed_handler(e):
+            scroll_gauge(e.WheelRotation, root.do_bedtemp, root.bsetpoint)
+        root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotend_handler)
+        root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bed_handler)
+
+        def updateGauge(e, gauge):
+            gauge.SetTarget(float(e.String.split()[0]))
+
+        root.htemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.hottgauge))
+        root.btemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.bedtgauge))
 
     # Temperature (M105) feedback display #
     root.tempdisp = wx.StaticText(parentpanel, -1, "", style = wx.ST_NO_AUTORESIZE)

@@ -17,6 +17,8 @@ printrun/gcoder_line*.pyd
 /build/
 /venv/
 /.vscode/
+/wheelhouse/
+*.egg-info/
 /v3/
 installed_files
 Printrun.egg-info/
