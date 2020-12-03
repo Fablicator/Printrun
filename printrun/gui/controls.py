@@ -293,14 +293,14 @@ def add_extra_controls(self, root, parentpanel, extra_buttons = None, mini_mode 
 
         def bed_handler(e):
             scroll_gauge(e.WheelRotation, root.do_bedtemp, root.bsetpoint)
-        root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotend_handler)
-        root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bed_handler)
+        # root.hottgauge.Bind(wx.EVT_MOUSEWHEEL, hotend_handler)
+        # root.bedtgauge.Bind(wx.EVT_MOUSEWHEEL, bed_handler)
 
         def updateGauge(e, gauge):
             gauge.SetTarget(float(e.String.split()[0]))
 
-        root.htemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.hottgauge))
-        root.btemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.bedtgauge))
+        # root.htemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.hottgauge))
+        # root.btemp.Bind(wx.EVT_TEXT, lambda e: updateGauge(e, root.bedtgauge))
 
     # Temperature (M105) feedback display #
     root.tempdisp = wx.StaticText(parentpanel, -1, "", style = wx.ST_NO_AUTORESIZE)

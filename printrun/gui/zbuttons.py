@@ -64,12 +64,10 @@ class ZButtons(FocusCanvas):
         evt.Skip()
 
     def disable(self):
-        self.Enabled = False # prevents focus
         self.enabled = False
         self.update()
 
     def enable(self):
-        self.Enabled = True
         self.enabled = True
         self.update()
 
