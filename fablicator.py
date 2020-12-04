@@ -87,7 +87,12 @@ if __name__ == '__main__':
             sys.exit(0)
 
     # Tell other instances to wait for the first instance
-    open(rpcwait_file,"w").write("")
+    if(not os.path.exists(os.path.dirname(rpcwait_file))):
+        # Create the path if it doesn't exist
+        os.makedirs(os.path.dirname(rpcwait_file))
+
+    open(rpcwait_file,"w+").write("")
+    
     app = PronterApp(False)
     try:
         app.MainLoop()
