@@ -121,6 +121,7 @@ class printcore():
         self.readline_buf = []
         self.selector = None
         self.event_handler = PRINTCORE_HANDLER
+        self.use_firmware_temp_report = False
         # Not all platforms need to do this parity workaround, and some drivers
         # don't support it.  Limit it to platforms that actually require it
         # here to avoid doing redundant work elsewhere and potentially breaking
@@ -379,6 +380,8 @@ class printcore():
 
     def _listen_until_online(self):
         while not self.online and self._listen_can_continue():
+            if self.use_firmware_temp_report:
+                self._send("M155 S2")
             self._send("M105")
             if self.writefailures >= 4:
                 logging.error(_("Aborting connection attempt after 4 failed writes."))

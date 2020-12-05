@@ -38,7 +38,7 @@ from .utils import install_locale, run_command, get_command_output, \
     get_home_pos, parse_build_dimensions, parse_temperature_report, \
     setup_logging
 install_locale('pronterface')
-from .settings import Settings, BuildDimensionsSetting
+from .settings import Settings, BuildDimensionsSetting, BooleanSetting
 from .power import powerset_print_start, powerset_print_stop
 from printrun import gcoder
 from .rpc import ProntRPC
@@ -181,7 +181,9 @@ class pronsole(cmd.Cmd):
         self.processing_args = False
         self.settings = Settings(self)
         self.settings._add(BuildDimensionsSetting("build_dimensions", "200x200x100+0+0+0+0+0+0", _("Build dimensions"), _("Dimensions of Build Platform\n & optional offset of origin\n & optional switch position\n\nExamples:\n   XXXxYYY\n   XXX,YYY,ZZZ\n   XXXxYYYxZZZ+OffX+OffY+OffZ\nXXXxYYYxZZZ+OffX+OffY+OffZ+HomeX+HomeY+HomeZ"), "Printer"), self.update_build_dimensions)
+        self.settings._add(BooleanSetting("use_firmware_temp_report", True, _("Use firmware auto-report"), _("Tell firmware to autoreport temperatures"), "Printer"))
         self.settings._port_list = self.scanserial
+        self.p.use_firmware_temp_report = self.settings.use_firmware_temp_report
         self.update_build_dimensions(None, self.settings.build_dimensions)
         self.update_tcp_streaming_mode(None, self.settings.tcp_streaming_mode)
         self.monitoring = 0
@@ -347,8 +349,9 @@ class pronsole(cmd.Cmd):
             each command is executed, for the next prompt.
             We also use it to send M105 commands so that
             temp info gets updated for the prompt."""
-        if self.p.online and self.dynamic_temp:
+        if self.p.online and self.dynamic_temp and not self.settings.use_firmware_temp_report:
             self.p.send_now("M105")
+            pass
         self.prompt = self.promptf()
         return stop
 
@@ -915,8 +918,9 @@ class pronsole(cmd.Cmd):
             if do_monitoring:
                 if self.sdprinting and not self.paused:
                     self.p.send_now("M27")
-                if self.m105_waitcycles % 10 == 0:
+                if self.m105_waitcycles % 10 == 0 and not self.settings.use_firmware_temp_report:
                     self.p.send_now("M105")
+                    pass
                 self.m105_waitcycles += 1
         cur_time = time.time()
         wait_time = 0
@@ -1419,7 +1423,8 @@ class pronsole(cmd.Cmd):
         if "dynamic" in l:
             self.dynamic_temp = True
         if self.p.online:
-            self.p.send_now("M105")
+            if not self.settings.use_firmware_temp_report:
+                self.p.send_now("M105")
             time.sleep(0.75)
             if not self.status.bed_enabled:
                 self.log(_("Hotend: %s%s/%s%s") % (self.status.extruder_temp, DEG, self.status.extruder_temp_target, DEG))
@@ -1508,7 +1513,8 @@ class pronsole(cmd.Cmd):
         prev_msg_len = 0
         try:
             while True:
-                self.p.send_now("M105")
+                if not self.settings.use_firmware_temp_report:
+                    self.p.send_now("M105")
                 if self.sdprinting:
                     self.p.send_now("M27")
                 time.sleep(interval)
