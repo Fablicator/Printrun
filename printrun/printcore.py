@@ -287,6 +287,9 @@ class printcore():
             self.printer.dtr = 0
             time.sleep(0.5)
             self.printer.dtr = 1
+            time.sleep(1)
+            if self.use_firmware_temp_report:
+                self.send("M155 S2")
 
     def _readline_buf(self):
         "Try to readline from buffer"
